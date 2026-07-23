@@ -1,0 +1,21 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getCardById } from "@/lib/chain";
+
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const cardId = Number(id);
+
+  if (!Number.isInteger(cardId)) {
+    return NextResponse.json({ error: "Geçersiz ID" }, { status: 400 });
+  }
+
+  const card = await getCardById(cardId);
+  if (!card) {
+    return NextResponse.json({ error: "Kart bulunamadı" }, { status: 404 });
+  }
+
+  return NextResponse.json(card);
+}
