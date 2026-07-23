@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createCard, ChainError, chainErrorStatus } from "@/lib/chain";
+import { auth } from "@/auth";
 import { CardData } from "@/lib/types";
 
 interface CreateCardBody extends CardData {
@@ -8,8 +9,23 @@ interface CreateCardBody extends CardData {
 
 export async function POST(req: NextRequest) {
   const body = (await req.json()) as Partial<CreateCardBody>;
+  const parentId = body.parentId ?? null;
 
-  if (!body.firstName?.trim() || !body.xUsername?.trim()) {
+  // Davet kabul akışında X kullanıcı adı istemciden değil, doğrulanmış
+  // oturumdan alınır — client'ın gönderdiği xUsername tamamen yok sayılır.
+  let xUsername = body.xUsername;
+  if (parentId != null) {
+    const session = await auth();
+    if (!session?.user?.username) {
+      return NextResponse.json(
+        { error: "NOT_AUTHENTICATED" },
+        { status: 401 }
+      );
+    }
+    xUsername = session.user.username;
+  }
+
+  if (!body.firstName?.trim() || !xUsername?.trim()) {
     return NextResponse.json(
       { error: "İsim ve X kullanıcı adı zorunludur." },
       { status: 400 }
@@ -20,13 +36,13 @@ export async function POST(req: NextRequest) {
     const card = await createCard({
       firstName: body.firstName,
       lastName: body.lastName ?? "",
-      xUsername: body.xUsername,
+      xUsername,
       role: body.role ?? "",
       skills: body.skills ?? "",
       profileImageUrl: body.profileImageUrl ?? null,
       logoImageUrl: body.logoImageUrl ?? null,
       targetUsername: body.targetUsername ?? "",
-      parentId: body.parentId ?? null,
+      parentId,
     });
 
     return NextResponse.json({ id: card.id });

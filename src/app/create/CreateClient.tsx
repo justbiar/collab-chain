@@ -68,7 +68,9 @@ export function CreateClient({
               ? "Bu davet sadece davet edilen X hesabıyla kabul edilebilir."
               : json.error === "INVITE_EXPIRED"
                 ? "Bu davetin süresi doldu."
-                : json.error ?? "Bir hata oluştu."
+                : json.error === "NOT_AUTHENTICATED"
+                  ? "Oturumun sona ermiş, sayfayı yenileyip tekrar X ile giriş yap."
+                  : json.error ?? "Bir hata oluştu."
         );
         return;
       }
