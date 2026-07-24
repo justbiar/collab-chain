@@ -33,6 +33,55 @@ export default async function CreatePage({ searchParams }: PageProps) {
     }
   }
 
+  // Genesis akışı (davetsiz yeni zincir başlatma): sadece admin X hesabı serbest
+  if (parentId == null && !inviteError) {
+    const adminUsername = process.env.ADMIN_X_USERNAME ?? "";
+    const session = await auth();
+    const sessionHandle = (session?.user?.username ?? "").toLowerCase();
+
+    if (!adminUsername || sessionHandle !== adminUsername.toLowerCase()) {
+      return (
+        <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-carbon px-4 text-center">
+          <p className="text-lg font-[450] text-bone">
+            {s.genesisLockedTitle(adminUsername)}
+          </p>
+          <p className="max-w-sm text-sm text-smoke">
+            {s.genesisLockedBody(adminUsername)}
+          </p>
+          <a
+            href={`https://x.com/${adminUsername}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-full bg-bone px-6 py-3 text-[15px] font-[500] tracking-[-0.02em] text-carbon transition hover:bg-ash"
+          >
+            {s.contactCta}
+          </a>
+
+          <div className="mt-4 flex flex-col items-center gap-2 border-t border-bone/10 pt-4">
+            <p className="text-xs text-iron">{s.adminSignInHint(adminUsername)}</p>
+            <form
+              action={async () => {
+                "use server";
+                await signIn("twitter", { redirectTo: "/create" });
+              }}
+            >
+              <button
+                type="submit"
+                className="rounded-full border border-bone/20 px-4 py-2 text-xs text-bone transition hover:bg-bone/5"
+              >
+                {s.signInWithX}
+              </button>
+            </form>
+          </div>
+
+          <Link href="/" className="text-xs text-iron underline">
+            {s.backHome}
+          </Link>
+        </div>
+      );
+    }
+  }
+
   // Davet kabul akışı: X ile kimlik doğrulaması şart
   if (parentCard && !inviteError) {
     const session = await auth();
