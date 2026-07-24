@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCardById, isInviteExpired } from "@/lib/chain";
 import { prisma } from "@/lib/prisma";
+import { getLocale, t } from "@/lib/i18n";
 import { InvitePreview } from "./InvitePreview";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +12,8 @@ interface PageProps {
 }
 
 export default async function InvitePage({ params }: PageProps) {
-  const { id } = await params;
+  const [{ id }, locale] = await Promise.all([params, getLocale()]);
+  const s = t(locale).invite;
   const parentId = Number(id);
   if (!Number.isInteger(parentId)) notFound();
 
@@ -21,9 +23,9 @@ export default async function InvitePage({ params }: PageProps) {
   if (!parent.targetUsername) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-carbon px-4 text-center">
-        <p className="text-lg font-[450] text-bone">Bu kart kimseyi davet etmemiş.</p>
+        <p className="text-lg font-[450] text-bone">{s.noTarget}</p>
         <Link href="/" className="text-smoke underline">
-          Ana sayfaya dön
+          {s.backHomePlain}
         </Link>
       </div>
     );
@@ -33,14 +35,14 @@ export default async function InvitePage({ params }: PageProps) {
     const child = await prisma.card.findFirst({ where: { parentId } });
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-carbon px-4 text-center">
-        <p className="text-lg font-[450] text-bone">Bu davet zaten kabul edildi 🎉</p>
+        <p className="text-lg font-[450] text-bone">{s.alreadyAccepted}</p>
         {child && (
           <Link href={`/card/${child.id}`} className="text-smoke underline">
-            @{child.xUsername} kartını gör
+            {s.viewCard(child.xUsername)}
           </Link>
         )}
         <Link href="/" className="text-xs text-iron underline">
-          ← Ana Sayfaya Dön
+          {s.backHome}
         </Link>
       </div>
     );
@@ -49,21 +51,16 @@ export default async function InvitePage({ params }: PageProps) {
   if (isInviteExpired(parent)) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-carbon px-4 text-center">
-        <p className="text-lg font-[450] text-bone">
-          Bu davetin süresi doldu ⌛
-        </p>
+        <p className="text-lg font-[450] text-bone">{s.expiredTitle}</p>
         <p className="max-w-sm text-sm text-smoke">
-          {parent.firstName} {parent.lastName}, davetini {parent.targetUsername
-            ? `@${parent.targetUsername}`
-            : "bu kişi"}{" "}
-          kabul etmediği için yenilemesi gerekiyor.
+          {s.expiredBody(parent.firstName, parent.lastName, parent.targetUsername ?? "")}
         </p>
         <Link href="/" className="text-xs text-iron underline">
-          ← Ana Sayfaya Dön
+          {s.backHome}
         </Link>
       </div>
     );
   }
 
-  return <InvitePreview parent={parent} />;
+  return <InvitePreview parent={parent} locale={locale} />;
 }

@@ -1,14 +1,17 @@
 import Link from "next/link";
 import type { Card } from "@/generated/prisma/client";
 import { isInviteExpired } from "@/lib/invite";
+import { Locale, t } from "@/lib/dictionary";
 import { Avatar } from "./Avatar";
 import { GoldenChain } from "./GoldenChain";
 
 interface ChainRowProps {
   cards: Card[];
+  locale: Locale;
 }
 
-export function ChainRow({ cards }: ChainRowProps) {
+export function ChainRow({ cards, locale }: ChainRowProps) {
+  const s = t(locale);
   const tip = cards[cards.length - 1];
   const hasPending = Boolean(tip?.targetUsername) && tip?.inviteStatus === "pending";
   const expired = hasPending && isInviteExpired(tip);
@@ -58,13 +61,15 @@ export function ChainRow({ cards }: ChainRowProps) {
               {expired ? "⌛" : "?"}
             </div>
             <div>
-              <p className="text-[9px] tracking-widest text-iron">SIRADAKİ</p>
+              <p className="text-[9px] tracking-widest text-iron">
+                {s.chainNode.next}
+              </p>
               <p className="truncate text-[11px] text-smoke">
                 @{tip.targetUsername}
               </p>
             </div>
             <span className="rounded-full border border-bone/20 px-2 py-0.5 text-[9px] text-smoke">
-              {expired ? "SÜRESİ DOLDU" : "PENDING"}
+              {expired ? s.chainNode.expired : s.chainNode.pending}
             </span>
           </Link>
         </div>

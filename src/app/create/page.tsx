@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getCardById, isInviteExpired, INVITE_EXPIRY_HOURS } from "@/lib/chain";
 import { auth, signIn, signOut } from "@/auth";
+import { getLocale, t } from "@/lib/i18n";
 import { CreateClient } from "./CreateClient";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +11,8 @@ interface PageProps {
 }
 
 export default async function CreatePage({ searchParams }: PageProps) {
-  const { invite } = await searchParams;
+  const [{ invite }, locale] = await Promise.all([searchParams, getLocale()]);
+  const s = t(locale).create;
   const parentId = invite ? Number(invite) : null;
 
   let parentCard = null;
@@ -18,16 +20,15 @@ export default async function CreatePage({ searchParams }: PageProps) {
 
   if (parentId != null) {
     if (!Number.isInteger(parentId)) {
-      inviteError = "Geçersiz davet linki.";
+      inviteError = s.invalidLink;
     } else {
       parentCard = await getCardById(parentId);
       if (!parentCard) {
-        inviteError = "Davet bulunamadı.";
+        inviteError = s.inviteNotFound;
       } else if (parentCard.inviteStatus === "accepted") {
-        inviteError = "Bu davet zaten başkası tarafından kabul edilmiş.";
+        inviteError = s.inviteAlreadyAcceptedByOther;
       } else if (isInviteExpired(parentCard)) {
-        inviteError =
-          "Bu davetin süresi doldu. Davet sahibinin daveti yenilemesi gerekiyor.";
+        inviteError = s.inviteExpiredRenewNeeded;
       }
     }
   }
@@ -41,13 +42,10 @@ export default async function CreatePage({ searchParams }: PageProps) {
       return (
         <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-carbon px-4 text-center">
           <p className="text-lg font-[450] text-bone">
-            @{parentCard.targetUsername}, bu daveti kabul etmek için X ile
-            giriş yapmalısın.
+            {s.authRequiredTitle(parentCard.targetUsername ?? "")}
           </p>
           <p className="max-w-sm text-sm text-smoke">
-            {parentCard.firstName} {parentCard.lastName} seni bu X hesabı
-            için davet etti — devam etmeden önce kimliğini doğrulaman
-            gerekiyor.
+            {s.authRequiredBody(parentCard.firstName, parentCard.lastName)}
           </p>
           <form
             action={async () => {
@@ -61,11 +59,11 @@ export default async function CreatePage({ searchParams }: PageProps) {
               type="submit"
               className="rounded-full bg-bone px-6 py-3 text-[15px] font-[500] tracking-[-0.02em] text-carbon transition hover:bg-ash"
             >
-              X ile Giriş Yap
+              {s.signInWithX}
             </button>
           </form>
           <Link href="/" className="text-xs text-iron underline">
-            ← Ana Sayfaya Dön
+            {s.backHome}
           </Link>
         </div>
       );
@@ -75,12 +73,12 @@ export default async function CreatePage({ searchParams }: PageProps) {
     if (sessionHandle !== target) {
       return (
         <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-carbon px-4 text-center">
-          <p className="text-lg font-[450] text-bone">
-            Bu davet sana ait değil
-          </p>
+          <p className="text-lg font-[450] text-bone">{s.notYoursTitle}</p>
           <p className="max-w-sm text-sm text-smoke">
-            Bu davet @{parentCard.targetUsername} için oluşturulmuş, ama sen
-            @{session.user.username ?? "bilinmeyen"} olarak giriş yaptın.
+            {s.notYoursBody(
+              parentCard.targetUsername ?? "",
+              session.user.username ?? s.unknownUser
+            )}
           </p>
           <form
             action={async () => {
@@ -92,11 +90,11 @@ export default async function CreatePage({ searchParams }: PageProps) {
               type="submit"
               className="rounded-full border border-bone/20 px-6 py-3 text-[15px] text-bone transition hover:bg-bone/5"
             >
-              Çıkış Yap ve Farklı Hesapla Dene
+              {s.signOutRetry}
             </button>
           </form>
           <Link href="/" className="text-xs text-iron underline">
-            ← Ana Sayfaya Dön
+            {s.backHome}
           </Link>
         </div>
       );
@@ -109,6 +107,7 @@ export default async function CreatePage({ searchParams }: PageProps) {
       parentCard={inviteError ? null : parentCard}
       inviteError={inviteError}
       inviteExpiryHours={INVITE_EXPIRY_HOURS}
+      locale={locale}
     />
   );
 }

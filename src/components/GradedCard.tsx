@@ -1,19 +1,22 @@
 import { forwardRef } from "react";
 import { CardData, parseSkills } from "@/lib/types";
 import { generateBarcodeWidths, generatePlayerId } from "@/lib/twitter-share";
+import { Locale, t } from "@/lib/dictionary";
 import { LogoPattern } from "./LogoPattern";
 import { Avatar } from "./Avatar";
 
 interface GradedCardProps {
   data: CardData;
   cardNumber?: number;
+  locale: Locale;
 }
 
 export const GradedCard = forwardRef<HTMLDivElement, GradedCardProps>(
-  function GradedCard({ data, cardNumber = 1 }, ref) {
+  function GradedCard({ data, cardNumber = 1, locale }, ref) {
+    const s = t(locale).card;
     const { firstName, lastName, xUsername, role, skills, profileImageUrl } = data;
-    const fullName = `${firstName} ${lastName}`.trim() || "İsimsiz Oyuncu";
-    const handle = xUsername.replace(/^@/, "") || "kullaniciadi";
+    const fullName = `${firstName} ${lastName}`.trim() || s.unnamed;
+    const handle = xUsername.replace(/^@/, "") || "username";
     const barcodeSeed = handle || "web3card";
     const barcodeWidths = generateBarcodeWidths(barcodeSeed);
     const playerId = generatePlayerId(barcodeSeed);
@@ -28,10 +31,10 @@ export const GradedCard = forwardRef<HTMLDivElement, GradedCardProps>(
         <div className="relative mb-3 flex items-start justify-between rounded-[12px] bg-bone px-3 py-2">
           <div>
             <p className="text-[11px] font-[450] tracking-[-0.02em] text-carbon">
-              WEB3 CARD
+              {s.brand}
             </p>
             <p className="text-[7px] tracking-[0.15em] text-iron">
-              DIGITAL COLLECTIBLE
+              {s.digitalCollectible}
             </p>
             <div className="mt-1.5 flex h-4 items-end gap-[1.5px]">
               {barcodeWidths.map((w, i) => (
@@ -43,7 +46,7 @@ export const GradedCard = forwardRef<HTMLDivElement, GradedCardProps>(
               ))}
             </div>
             <p className="mt-1 text-[7px] tracking-wider text-iron">
-              PLAYER ID: {playerId}
+              {s.playerId}: {playerId}
             </p>
           </div>
           <div className="text-3xl font-[450] leading-none tracking-[-0.03em] text-carbon">
@@ -58,7 +61,7 @@ export const GradedCard = forwardRef<HTMLDivElement, GradedCardProps>(
           {/* top row */}
           <div className="relative z-10 flex items-center justify-between">
             <span className="rounded-full border border-bone/20 px-2 py-0.5 text-[9px] tracking-wider text-smoke">
-              ● ACTIVE
+              ● {s.active}
             </span>
             <span className="text-xs font-[450] text-bone">@{handle}</span>
           </div>
@@ -83,13 +86,13 @@ export const GradedCard = forwardRef<HTMLDivElement, GradedCardProps>(
               {fullName}
             </h3>
             <p className="mt-0.5 text-[11px] uppercase tracking-[0.15em] text-smoke">
-              {role || "Web3 Builder"}
+              {role || s.defaultRole}
             </p>
           </div>
 
           {/* skills */}
           <div className="relative z-10 mt-7">
-            <p className="text-[9px] tracking-[0.2em] text-iron">SKILLS:</p>
+            <p className="text-[9px] tracking-[0.2em] text-iron">{s.skills}</p>
             <div className="mt-2 flex flex-wrap gap-1.5">
               {(skillList.length > 0 ? skillList : ["Web3", "Builder"]).map((skill, i) => (
                 <span

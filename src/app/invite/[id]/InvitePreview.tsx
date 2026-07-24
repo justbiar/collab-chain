@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { ChainShareGraphic } from "@/components/ChainShareGraphic";
 import { CardData } from "@/lib/types";
+import { Locale, t } from "@/lib/i18n";
 import type { Card } from "@/generated/prisma/client";
 
-export function InvitePreview({ parent }: { parent: Card }) {
+export function InvitePreview({ parent, locale }: { parent: Card; locale: Locale }) {
+  const s = t(locale).invite;
   const data: CardData = {
     firstName: parent.firstName,
     lastName: parent.lastName,
@@ -22,12 +24,10 @@ export function InvitePreview({ parent }: { parent: Card }) {
           @{parent.targetUsername}
         </p>
         <p className="mt-1 text-[35px] font-[450] leading-[1.1] tracking-[-0.04em] text-bone">
-          Zincire davetlisin!
+          {s.heading}
         </p>
         <p className="mt-3 text-[15px] text-smoke">
-          {parent.firstName} {parent.lastName} (@{parent.xUsername}) seni Web3
-          Chain&apos;e davet etti. Kabul et, kendi kartını oluştur ve zinciri
-          devam ettir.
+          {s.body(parent.firstName, parent.lastName, parent.xUsername)}
         </p>
       </header>
 
@@ -37,7 +37,7 @@ export function InvitePreview({ parent }: { parent: Card }) {
             className="origin-top-left scale-[0.6]"
             style={{ width: 1200, height: 630 }}
           >
-            <ChainShareGraphic data={data} />
+            <ChainShareGraphic data={data} locale={locale} />
           </div>
         </div>
       </div>
@@ -46,11 +46,11 @@ export function InvitePreview({ parent }: { parent: Card }) {
         href={`/create?invite=${parent.id}`}
         className="rounded-full bg-bone px-8 py-4 text-[15px] font-[500] tracking-[-0.02em] text-carbon transition hover:bg-ash"
       >
-        Kabul Et ve Kartımı Oluştur
+        {s.acceptCta}
       </Link>
 
       <Link href="/" className="text-xs text-iron underline">
-        ← Ana Sayfaya Dön
+        {s.backHome}
       </Link>
     </div>
   );

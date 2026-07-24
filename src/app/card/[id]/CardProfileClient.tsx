@@ -9,11 +9,13 @@ import { CardData } from "@/lib/types";
 import { downloadNodeAsImage } from "@/lib/download-image";
 import { buildChainTweetIntent } from "@/lib/twitter-share";
 import { isInviteExpired, hoursRemaining } from "@/lib/invite";
+import { Locale, t } from "@/lib/dictionary";
 import type { Card } from "@/generated/prisma/client";
 
 type Tab = "card" | "chain";
 
-export function CardProfileClient({ card }: { card: Card }) {
+export function CardProfileClient({ card, locale }: { card: Card; locale: Locale }) {
+  const s = t(locale).profile;
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("card");
   const [isDownloading, setIsDownloading] = useState(false);
@@ -58,7 +60,7 @@ export function CardProfileClient({ card }: { card: Card }) {
 
   const handleShare = () => {
     const inviteUrl = `${window.location.origin}/invite/${card.id}`;
-    const url = buildChainTweetIntent(card.targetUsername ?? "", inviteUrl);
+    const url = buildChainTweetIntent(card.targetUsername ?? "", inviteUrl, locale);
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
@@ -71,7 +73,7 @@ export function CardProfileClient({ card }: { card: Card }) {
 
   const handleRenew = async () => {
     if (!renewTarget.trim()) {
-      setRenewError("Yeni bir X kullanıcı adı gir.");
+      setRenewError(s.renewErrorTarget);
       return;
     }
     setIsRenewing(true);
@@ -84,17 +86,19 @@ export function CardProfileClient({ card }: { card: Card }) {
       });
       const json = await res.json();
       if (!res.ok) {
-        setRenewError(json.error ?? "Bir hata oluştu.");
+        setRenewError(json.error ?? s.renewErrorGeneric);
         return;
       }
       setRenewTarget("");
       router.refresh();
     } catch {
-      setRenewError("Bağlantı hatası, tekrar dene.");
+      setRenewError(s.renewErrorConnection);
     } finally {
       setIsRenewing(false);
     }
   };
+
+  const create = t(locale).create;
 
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-carbon px-4 py-10 sm:px-8">
@@ -118,7 +122,7 @@ export function CardProfileClient({ card }: { card: Card }) {
                 : "text-iron hover:text-bone"
             }`}
           >
-            KOLEKSIYON KARTI
+            {create.tabCard}
           </button>
           {hasTarget && (
             <button
@@ -129,14 +133,14 @@ export function CardProfileClient({ card }: { card: Card }) {
                   : "text-iron hover:text-bone"
               }`}
             >
-              ZİNCİR PAYLAŞIMI
+              {create.tabChain}
             </button>
           )}
         </div>
 
         <div className="w-full max-w-full overflow-x-auto rounded-[17.6px] border border-bone/10 bg-carbon p-6 sm:p-10">
           <div className={tab === "card" ? "flex justify-center" : "hidden"}>
-            <GradedCard ref={cardRef} data={data} cardNumber={card.id} />
+            <GradedCard ref={cardRef} data={data} cardNumber={card.id} locale={locale} />
           </div>
           {hasTarget && (
             <div
@@ -150,7 +154,7 @@ export function CardProfileClient({ card }: { card: Card }) {
                 className="origin-top-left scale-[0.6]"
                 style={{ width: 1200, height: 630 }}
               >
-                <ChainShareGraphic ref={chainRef} data={data} />
+                <ChainShareGraphic ref={chainRef} data={data} locale={locale} />
               </div>
             </div>
           )}
@@ -162,14 +166,14 @@ export function CardProfileClient({ card }: { card: Card }) {
             disabled={isDownloading}
             className="flex-1 rounded-full border border-bone/20 px-5 py-3 text-[15px] tracking-[-0.02em] text-bone transition hover:bg-bone/5 disabled:opacity-50"
           >
-            {isDownloading ? "İndiriliyor..." : "PNG İndir"}
+            {isDownloading ? s.downloading : s.pngDownload}
           </button>
           {hasTarget && card.inviteStatus === "pending" && !expired && (
             <button
               onClick={handleShare}
               className="flex-1 rounded-full bg-bone px-5 py-3 text-[15px] font-[500] tracking-[-0.02em] text-carbon transition hover:bg-ash"
             >
-              X&apos;te Paylaş
+              {s.shareOnX}
             </button>
           )}
         </div>
@@ -178,12 +182,10 @@ export function CardProfileClient({ card }: { card: Card }) {
           <div className="flex w-full max-w-md flex-col items-center gap-3 rounded-[17.6px] border border-bone/10 p-4 text-center">
             <p className="text-xs text-smoke">
               {card.inviteStatus === "accepted"
-                ? `✅ @${card.targetUsername} zincire katıldı!`
+                ? s.accepted(card.targetUsername ?? "")
                 : expired
-                  ? `⌛ @${card.targetUsername} daveti süresi doldu`
-                  : `⏳ @${card.targetUsername} bekleniyor${
-                      remainingHours != null ? ` · ${remainingHours} saat kaldı` : ""
-                    }`}
+                  ? s.expired(card.targetUsername ?? "")
+                  : s.pending(card.targetUsername ?? "", remainingHours)}
             </p>
 
             {card.inviteStatus === "pending" && !expired && (
@@ -191,20 +193,18 @@ export function CardProfileClient({ card }: { card: Card }) {
                 onClick={handleCopyInvite}
                 className="text-xs text-bone underline"
               >
-                {copied ? "Kopyalandı!" : "Davet Linkini Kopyala"}
+                {copied ? s.copied : s.copyInviteLink}
               </button>
             )}
 
             {card.inviteStatus === "pending" && expired && (
               <div className="flex w-full flex-col items-center gap-2">
-                <p className="text-[11px] text-iron">
-                  Farklı birini etiketleyip daveti yenileyebilirsin.
-                </p>
+                <p className="text-[11px] text-iron">{s.renewHint}</p>
                 <div className="flex w-full gap-2">
                   <input
                     value={renewTarget}
                     onChange={(e) => setRenewTarget(e.target.value)}
-                    placeholder="@yeni_kullanici"
+                    placeholder={s.renewPlaceholder}
                     className="w-full rounded-full border border-bone/10 bg-bone/5 px-4 py-2 text-sm text-bone placeholder:text-iron/60 outline-none focus:border-bone/40"
                   />
                   <button
@@ -212,7 +212,7 @@ export function CardProfileClient({ card }: { card: Card }) {
                     disabled={isRenewing}
                     className="shrink-0 rounded-full bg-bone px-4 py-2 text-xs font-[500] text-carbon transition hover:bg-ash disabled:opacity-50"
                   >
-                    {isRenewing ? "..." : "Yenile"}
+                    {isRenewing ? s.renewing : s.renewButton}
                   </button>
                 </div>
                 {renewError && <p className="text-xs text-red-400">{renewError}</p>}
@@ -222,7 +222,7 @@ export function CardProfileClient({ card }: { card: Card }) {
         )}
 
         <Link href="/" className="text-xs text-iron underline">
-          ← Ana Sayfaya Dön
+          {s.backHome}
         </Link>
       </main>
     </div>

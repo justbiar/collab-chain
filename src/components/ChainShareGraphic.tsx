@@ -1,20 +1,23 @@
 import { forwardRef } from "react";
 import { CardData } from "@/lib/types";
+import { Locale, t } from "@/lib/dictionary";
 import { LogoPattern } from "./LogoPattern";
 import { GoldenChain } from "./GoldenChain";
 import { Avatar } from "./Avatar";
 
 interface ChainShareGraphicProps {
   data: CardData;
+  locale: Locale;
 }
 
 export const ChainShareGraphic = forwardRef<HTMLDivElement, ChainShareGraphicProps>(
-  function ChainShareGraphic({ data }, ref) {
+  function ChainShareGraphic({ data, locale }, ref) {
+    const s = t(locale);
     const { firstName, lastName, xUsername, role, profileImageUrl, targetUsername, logoImageUrl } =
       data;
-    const fullName = `${firstName} ${lastName}`.trim() || "İsimsiz Oyuncu";
-    const handle = xUsername.replace(/^@/, "") || "kullaniciadi";
-    const target = targetUsername.replace(/^@/, "") || "siradaki";
+    const fullName = `${firstName} ${lastName}`.trim() || s.card.unnamed;
+    const handle = xUsername.replace(/^@/, "") || "username";
+    const target = targetUsername.replace(/^@/, "") || "next";
 
     return (
       <div
@@ -23,14 +26,14 @@ export const ChainShareGraphic = forwardRef<HTMLDivElement, ChainShareGraphicPro
       >
         {/* watermark */}
         <div className="absolute left-1/2 top-6 z-10 -translate-x-1/2 text-[11px] tracking-[0.4em] text-iron">
-          WEB3 CHAIN
+          {s.chainShare.watermark}
         </div>
 
         {/* LEFT: completed card */}
         <div className="relative z-10 flex h-[460px] w-[340px] flex-col items-center justify-center overflow-hidden rounded-[17.6px] border border-bone/10 bg-carbon p-6">
           <LogoPattern logoUrl={logoImageUrl} opacity={0.05} />
           <span className="absolute left-4 top-4 rounded-full border border-bone/20 px-2 py-0.5 text-[9px] tracking-wider text-smoke">
-            ● ACTIVE
+            ● {s.card.active}
           </span>
           <span className="absolute right-4 top-4 text-xs font-[450] text-bone">
             @{handle}
@@ -54,7 +57,7 @@ export const ChainShareGraphic = forwardRef<HTMLDivElement, ChainShareGraphicPro
             {fullName}
           </h3>
           <p className="relative z-10 mt-1 text-xs uppercase tracking-[0.15em] text-smoke">
-            {role || "Web3 Builder"}
+            {role || s.card.defaultRole}
           </p>
         </div>
 
@@ -86,10 +89,10 @@ export const ChainShareGraphic = forwardRef<HTMLDivElement, ChainShareGraphicPro
               </div>
             }
           />
-          <p className="mt-5 text-xs tracking-[0.2em] text-iron">SIRADAKİ</p>
+          <p className="mt-5 text-xs tracking-[0.2em] text-iron">{s.chainShare.next}</p>
           <p className="mt-1 text-xl font-[450] text-bone">@{target}</p>
           <span className="mt-3 rounded-full border border-bone/20 px-3 py-1 text-[10px] tracking-[0.2em] text-smoke">
-            PENDING
+            {s.chainShare.pending}
           </span>
         </div>
       </div>

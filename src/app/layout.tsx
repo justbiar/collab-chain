@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { getLocale, t } from "@/lib/i18n";
+import { SiteControls } from "@/components/SiteControls";
 import "./globals.css";
 
 const inter = Inter({
@@ -7,19 +9,47 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Web3 Chain Card",
-  description: "Zincire katıl, kartını oluştur, X'te paylaş.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  const s = t(locale);
+  return {
+    title: s.siteName,
+    description: s.siteTagline,
+  };
+}
 
-export default function RootLayout({
+const THEME_INIT_SCRIPT = `
+(function () {
+  try {
+    var theme = localStorage.getItem('theme');
+    if (!theme) {
+      theme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    }
+    document.documentElement.setAttribute('data-theme', theme);
+  } catch (e) {}
+})();
+`;
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+
   return (
-    <html lang="tr" className={`${inter.variable} h-full antialiased dark`}>
-      <body className="min-h-full flex flex-col bg-carbon text-bone">{children}</body>
+    <html
+      lang={locale}
+      className={`${inter.variable} h-full antialiased`}
+      suppressHydrationWarning
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
+      <body className="min-h-full flex flex-col bg-carbon text-bone">
+        <SiteControls locale={locale} />
+        {children}
+      </body>
     </html>
   );
 }

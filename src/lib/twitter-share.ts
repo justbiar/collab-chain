@@ -1,8 +1,10 @@
-export function buildChainTweetIntent(targetUsername: string, siteUrl: string) {
+import type { Locale } from "./dictionary";
+import { t } from "./dictionary";
+
+export function buildChainTweetIntent(targetUsername: string, siteUrl: string, locale: Locale) {
   const handle = targetUsername.replace(/^@/, "").trim();
-  const text = handle
-    ? `Ben Web3 zincirine katıldım! Sıra sende @${handle}, kendi kartını oluştur ve zinciri devam ettir! 🔗`
-    : `Ben Web3 zincirine katıldım! Kendi kartını oluştur ve zinciri devam ettir! 🔗`;
+  const s = t(locale).tweetIntent;
+  const text = handle ? s.joined(handle) : s.joinedNoTarget;
 
   const params = new URLSearchParams({ text, url: siteUrl });
   return `https://twitter.com/intent/tweet?${params.toString()}`;

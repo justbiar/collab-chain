@@ -3,10 +3,12 @@
 import { ChangeEvent } from "react";
 import { CardData } from "@/lib/types";
 import { readFileAsDataUrl } from "@/lib/download-image";
+import { Locale, t } from "@/lib/dictionary";
 
 interface CardFormProps {
   data: CardData;
   onChange: (data: CardData) => void;
+  locale: Locale;
   /** Davetle gelen kullanıcı için X adını sabitler; başka bir isimle kabul edilmesini engeller. */
   lockedUsername?: string | null;
 }
@@ -22,7 +24,8 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 const inputClass =
   "w-full rounded-[12px] border border-bone/10 bg-bone/5 px-3 py-2 text-sm text-bone placeholder:text-iron/60 outline-none transition focus:border-bone/40 focus:bg-bone/[0.07]";
 
-export function CardForm({ data, onChange, lockedUsername }: CardFormProps) {
+export function CardForm({ data, onChange, locale, lockedUsername }: CardFormProps) {
+  const s = t(locale).form;
   const update = (patch: Partial<CardData>) => onChange({ ...data, ...patch });
 
   const handleImageUpload =
@@ -36,13 +39,11 @@ export function CardForm({ data, onChange, lockedUsername }: CardFormProps) {
 
   return (
     <div className="space-y-5 rounded-[17.6px] border border-bone/10 bg-carbon p-6">
-      <h2 className="text-sm font-[450] tracking-[0.2em] text-bone">
-        KART BİLGİLERİN
-      </h2>
+      <h2 className="text-sm font-[450] tracking-[0.2em] text-bone">{s.title}</h2>
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <FieldLabel>İsim</FieldLabel>
+          <FieldLabel>{s.firstName}</FieldLabel>
           <input
             className={inputClass}
             value={data.firstName}
@@ -51,7 +52,7 @@ export function CardForm({ data, onChange, lockedUsername }: CardFormProps) {
           />
         </div>
         <div>
-          <FieldLabel>Soyisim</FieldLabel>
+          <FieldLabel>{s.lastName}</FieldLabel>
           <input
             className={inputClass}
             value={data.lastName}
@@ -62,44 +63,42 @@ export function CardForm({ data, onChange, lockedUsername }: CardFormProps) {
       </div>
 
       <div>
-        <FieldLabel>X (Twitter) Kullanıcı Adı</FieldLabel>
+        <FieldLabel>{s.xUsername}</FieldLabel>
         <input
           className={`${inputClass} ${lockedUsername ? "cursor-not-allowed opacity-60" : ""}`}
           value={data.xUsername}
           onChange={(e) => update({ xUsername: e.target.value })}
-          placeholder="@kullaniciadi"
+          placeholder="@username"
           readOnly={Boolean(lockedUsername)}
         />
         {lockedUsername && (
-          <p className="mt-1.5 text-[11px] text-iron">
-            Bu davet sadece @{lockedUsername} hesabı için geçerli.
-          </p>
+          <p className="mt-1.5 text-[11px] text-iron">{s.lockedNote(lockedUsername)}</p>
         )}
       </div>
 
       <div>
-        <FieldLabel>Rol / Unvan</FieldLabel>
+        <FieldLabel>{s.role}</FieldLabel>
         <input
           className={inputClass}
           value={data.role}
           onChange={(e) => update({ role: e.target.value })}
-          placeholder="Founder, CTO, Smart Contract Dev..."
+          placeholder={s.rolePlaceholder}
         />
       </div>
 
       <div>
-        <FieldLabel>Yetenekler (virgülle ayır)</FieldLabel>
+        <FieldLabel>{s.skills}</FieldLabel>
         <input
           className={inputClass}
           value={data.skills}
           onChange={(e) => update({ skills: e.target.value })}
-          placeholder="Solidity, Rust, DeFi, Tokenomics"
+          placeholder={s.skillsPlaceholder}
         />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <FieldLabel>Profil Fotoğrafı</FieldLabel>
+          <FieldLabel>{s.profileImage}</FieldLabel>
           <input
             type="file"
             accept="image/*"
@@ -108,7 +107,7 @@ export function CardForm({ data, onChange, lockedUsername }: CardFormProps) {
           />
         </div>
         <div>
-          <FieldLabel>Topluluk / Şirket Logosu</FieldLabel>
+          <FieldLabel>{s.logoImage}</FieldLabel>
           <input
             type="file"
             accept="image/*"
@@ -119,12 +118,12 @@ export function CardForm({ data, onChange, lockedUsername }: CardFormProps) {
       </div>
 
       <div className="border-t border-bone/10 pt-4">
-        <FieldLabel>Zincirdeki Sıradaki Kişi (Hedef @username)</FieldLabel>
+        <FieldLabel>{s.targetUsername}</FieldLabel>
         <input
           className={inputClass}
           value={data.targetUsername}
           onChange={(e) => update({ targetUsername: e.target.value })}
-          placeholder="@davetettigin_kisi"
+          placeholder={s.targetPlaceholder}
         />
       </div>
     </div>
