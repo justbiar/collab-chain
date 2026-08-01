@@ -5,12 +5,17 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-inter);
 
-  /* Analogue-inspired monochrome palette (theme-aware via CSS vars) */
+  /* Metallic monochrome palette (theme-aware via CSS vars) */
   --color-carbon: var(--carbon);
   --color-bone: var(--bone);
   --color-ash: var(--ash);
   --color-smoke: var(--smoke);
   --color-iron: var(--iron);
+
+  /* Metal surfaces */
+  --color-chrome: var(--chrome);
+  --color-steel-plate: var(--steel-plate);
+  --color-graphite: var(--graphite);
 
   /* Type scale */
   --text-caption: 13px;
@@ -28,30 +33,501 @@
 }
 
 :root {
-  --background: #000000;
-  --foreground: #ffffff;
+  --background: #08080a;
+  --foreground: #e8e8ec;
 
-  --carbon: #000000;
-  --bone: #ffffff;
-  --ash: #e5e7eb;
-  --smoke: #bfbfbf;
-  --iron: #999999;
+  --carbon: #08080a;
+  --bone: #e8e8ec;
+  --ash: #b8bcc4;
+  --smoke: #8b9099;
+  --iron: #4a4d54;
+
+  --chrome: #e8e8ec;
+  --graphite: #3a3d44;
+  --steel-plate: #1e2024;
+
+  --edge-rgb: 232, 232, 236;
+  --grid-line-rgb: 130, 136, 146;
 }
 
 :root[data-theme="light"] {
-  --background: #ffffff;
-  --foreground: #0a0a0a;
+  --background: #f4f4f6;
+  --foreground: #0d0e11;
 
   --carbon: #ffffff;
-  --bone: #0a0a0a;
-  --ash: #374151;
-  --smoke: #4b5563;
-  --iron: #6b7280;
+  --bone: #0d0e11;
+  --ash: #3a3d44;
+  --smoke: #6b7079;
+  --iron: #9aa0a8;
+
+  --chrome: #6b7079;
+  --graphite: #d4d6db;
+  --steel-plate: #e6e7ea;
+
+  --edge-rgb: 13, 14, 17;
+  --grid-line-rgb: 150, 155, 165;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Machined grid — faint milled lines on the dark plate */
+.bg-blueprint-grid {
+  background-color: var(--background);
+  background-image:
+    linear-gradient(to right, rgba(var(--grid-line-rgb), 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(var(--grid-line-rgb), 0.06) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* Cold specular light pooling on the plate — no chromatic tint */
+.ambient-blue-aura {
+  position: absolute;
+  top: -140px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 860px;
+  height: 520px;
+  background: radial-gradient(
+    ellipse,
+    rgba(232, 232, 236, 0.16) 0%,
+    rgba(184, 188, 196, 0.07) 45%,
+    transparent 72%
+  );
+  filter: blur(80px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ambient-blueprint-aura {
+  position: absolute;
+  top: 420px;
+  right: -140px;
+  width: 560px;
+  height: 560px;
+  background: radial-gradient(
+    circle,
+    rgba(232, 232, 236, 0.08) 0%,
+    rgba(139, 144, 153, 0.04) 50%,
+    transparent 72%
+  );
+  filter: blur(100px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/*
+ * Brushed graphite panels with a chrome hairline
+ */
+.metallic-panel,
+.glass-panel {
+  background:
+    linear-gradient(
+      160deg,
+      color-mix(in srgb, var(--graphite) 42%, transparent) 0%,
+      color-mix(in srgb, var(--steel-plate) 72%, transparent) 52%,
+      color-mix(in srgb, var(--carbon) 62%, transparent) 100%
+    );
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(var(--edge-rgb), 0.14);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 0 rgba(0, 0, 0, 0.35),
+    0 22px 44px -22px rgba(0, 0, 0, 0.85);
+}
+
+.metallic-panel-hover,
+.glass-panel-hover {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.metallic-panel-hover:hover,
+.glass-panel-hover:hover {
+  border-color: rgba(var(--edge-rgb), 0.32);
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.18),
+    inset 0 -1px 0 0 rgba(0, 0, 0, 0.35),
+    0 28px 54px -20px rgba(0, 0, 0, 0.9);
+}
+
+/*
+ * Machined silver pill — the single action surface
+ */
+.btn-metallic-silver {
+  background: linear-gradient(
+    180deg,
+    #fdfdff 0%,
+    #e2e4ea 38%,
+    #b6bac2 52%,
+    #d6d9df 78%,
+    #f2f3f6 100%
+  );
+  color: #08080a;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.25),
+    0 14px 34px -14px rgba(0, 0, 0, 0.9);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-metallic-silver:hover {
+  background: linear-gradient(
+    180deg,
+    #ffffff 0%,
+    #eceef2 38%,
+    #c6cad2 52%,
+    #e0e3e8 78%,
+    #ffffff 100%
+  );
+  transform: translateY(-2px) scale(1.015);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.25),
+    0 20px 44px -14px rgba(0, 0, 0, 0.95);
+}
+
+/* Ghost/secondary control — etched into the plate rather than raised */
+.btn-metallic-ghost {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--graphite) 48%, transparent) 0%,
+    color-mix(in srgb, var(--carbon) 55%, transparent) 100%
+  );
+  color: var(--bone);
+  border: 1px solid rgba(var(--edge-rgb), 0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.4);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-metallic-ghost:hover {
+  border-color: rgba(var(--edge-rgb), 0.4);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.4);
+}
+
+/* Polished chrome lettering for display type */
+.text-gradient-ice {
+  background: linear-gradient(
+    170deg,
+    #ffffff 0%,
+    #e4e6ec 28%,
+    #9ea3ac 52%,
+    #e8eaf0 74%,
+    #ffffff 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+:root[data-theme="light"] .text-gradient-ice {
+  background: linear-gradient(
+    170deg,
+    #2c2f36 0%,
+    #0d0e11 30%,
+    #575c65 52%,
+    #14161a 74%,
+    #33363d 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/*
+ * Album-cover mockup stage — the card presented as a product shot:
+ * raked spotlight behind it, floor reflection beneath it.
+ */
+.mockup-stage {
+  position: relative;
+  isolation: isolate;
+}
+
+.mockup-stage::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 8%;
+  width: 78%;
+  height: 70%;
+  transform: translateX(-50%);
+  background: radial-gradient(
+    ellipse at center,
+    rgba(232, 232, 236, 0.13) 0%,
+    rgba(232, 232, 236, 0.04) 45%,
+    transparent 72%
+  );
+  filter: blur(56px);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Contact shadow where the object meets the floor */
+.mockup-stage::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 2%;
+  width: 62%;
+  height: 44px;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.75) 0%, transparent 72%);
+  filter: blur(22px);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Gallery reflection under the artwork (Chromium/Safari; degrades to no reflection) */
+.mockup-reflect {
+  -webkit-box-reflect: below 10px linear-gradient(transparent 62%, rgba(255, 255, 255, 0.16));
+}
+
+/*
+ * Collectible card — machined slab case
+ */
+.card-plastic {
+  background:
+    linear-gradient(
+      148deg,
+      #8a8f98 0%,
+      #43474e 9%,
+      #23262b 26%,
+      #15171a 52%,
+      #0d0e11 76%,
+      #3c4047 93%,
+      #7d828b 100%
+    );
+  transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s ease;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.card-3d-wrapper {
+  perspective: 1200px;
+}
+
+/* Cosmic violet art plate — the one place colour is allowed */
+.card-nebula {
+  background:
+    radial-gradient(circle at 30% 20%, rgba(168, 85, 247, 0.55), transparent 46%),
+    radial-gradient(circle at 76% 14%, rgba(217, 70, 239, 0.4), transparent 40%),
+    radial-gradient(circle at 50% 102%, rgba(124, 58, 237, 0.38), transparent 56%),
+    linear-gradient(180deg, #2b1243 0%, #180a29 46%, #0a0512 100%);
+}
+
+.card-nebula-muted {
+  background:
+    radial-gradient(circle at 50% 25%, rgba(154, 160, 168, 0.2), transparent 46%),
+    linear-gradient(180deg, #26282d 0%, #16181b 50%, #08080a 100%);
+}
+
+.card-stars {
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.9) 1px, transparent 1.2px),
+    radial-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1.2px);
+  background-size: 64px 64px, 96px 96px;
+  background-position: 0 0, 30px 45px;
+}
+
+/* Mouse-tracked specular sweep across the case */
+.card-holo-sheen {
+  background: radial-gradient(
+    circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(226, 228, 234, 0.26) 26%,
+    rgba(168, 85, 247, 0.2) 48%,
+    transparent 82%
+  );
+  mix-blend-mode: screen;
+  transition: opacity 0.3s ease;
+}
+
+.card-glare {
+  background: radial-gradient(
+    circle at var(--mouse-x, 50%) var(--mouse-y, 20%),
+    rgba(255, 255, 255, 0.3) 0%,
+    rgba(255, 255, 255, 0.06) 42%,
+    transparent 72%
+  );
+  pointer-events: none;
+}
+
+/* Brushed-steel authentication strip on the label */
+.card-holo-strip {
+  background: linear-gradient(
+    90deg,
+    #b6bac2,
+    #f6f7f9,
+    #9aa0a8,
+    #ffffff,
+    #a8adb6,
+    #f2f3f6,
+    #b6bac2
+  );
+  background-size: 200% 100%;
+  animation: holoStripShift 6s linear infinite;
+}
+
+@keyframes holoStripShift {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 200% 0%; }
+}
+
+/* Machined bezel around the avatar.
+   The sweep is animated through the gradient's own angle — rotating the box
+   would drag the portrait inside it around with it. */
+@property --ring-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 180deg;
+}
+
+.card-avatar-ring {
+  background: conic-gradient(
+    from var(--ring-angle),
+    #f4f5f8,
+    #9aa0a8,
+    #e8e8ec,
+    #5c6169,
+    #d8dbe1,
+    #f4f5f8
+  );
+  animation: ringRotate 10s linear infinite;
+}
+
+@keyframes ringRotate {
+  from { --ring-angle: 0deg; }
+  to { --ring-angle: 360deg; }
+}
+
+.card-avatar-ring-muted {
+  background: conic-gradient(from 180deg, #6b7079, #4a4d54, #33363d, #4a4d54, #6b7079);
+}
+
+.skill-dot {
+  background: linear-gradient(135deg, #f2f3f6, #9aa0a8);
+}
+
+.animate-spin-slow {
+  animation: spin 6s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Chain link "gold" finish with animated shimmer */
+.chain-link-gold {
+  border-color: #d9b34a;
+  box-shadow:
+    inset 0 1.5px 1.5px rgba(255, 250, 220, 0.85),
+    inset 0 -1.5px 2px rgba(90, 62, 10, 0.6),
+    0 1px 4px rgba(217, 179, 74, 0.3);
+  transition: all 0.25s ease;
+}
+
+/* Kopmuş halka — elenmiş üyeye giden, tavı gitmiş bağ */
+.chain-link-broken {
+  border-color: rgba(var(--edge-rgb), 0.22);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.06);
+  opacity: 0.5;
+}
+
+.chain-pulse-active {
+  animation: chainLinkGlow 2.5s infinite ease-in-out;
+}
+
+@keyframes chainLinkGlow {
+  0%, 100% {
+    border-color: #d9b34a;
+    box-shadow:
+      inset 0 1.5px 1.5px rgba(255, 250, 220, 0.85),
+      inset 0 -1.5px 2px rgba(90, 62, 10, 0.6),
+      0 1px 3px rgba(0, 0, 0, 0.35);
+  }
+  50% {
+    border-color: #ffe893;
+    box-shadow:
+      inset 0 2px 3px rgba(255, 255, 255, 0.95),
+      inset 0 -1.5px 2px rgba(180, 130, 20, 0.8),
+      0 0 12px rgba(250, 204, 21, 0.75);
+  }
+}
+
+/*
+ * Split-flap geri sayım kutuları.
+ *
+ * Kart gibi bu da fiziksel bir nesne taklidi: tema açık da olsa koyu kalır,
+ * beyaz sayfanın üstünde masaya konmuş bir çevirmeli saat gibi durur.
+ */
+.flip-tile {
+  color: #b6b6b8;
+  background: linear-gradient(180deg, #202024 0%, #17171a 49.6%, #0e0e10 50.4%, #191a1d 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.6),
+    0 8px 18px -8px rgba(0, 0, 0, 0.8);
+  /* Kanatların birleştiği menteşe çizgisi */
+  position: relative;
+  overflow: hidden;
+  letter-spacing: -0.02em;
+}
+
+.flip-tile::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: rgba(0, 0, 0, 0.75);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05);
+  pointer-events: none;
+}
+
+.flip-separator {
+  color: #6d6d70;
+  font-weight: 700;
+  line-height: 1;
+  /* Altındaki etiket kadar yukarı kaydırılır ki rakamların ortasına denk gelsin */
+  align-self: center;
+  margin-bottom: 1.35rem;
+  user-select: none;
+}
+
+/* Flowing avatar marquee — chain members drifting past like a photo strip */
+.marquee-fade {
+  mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+}
+
+@keyframes marquee-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  animation: marquee-scroll 36s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee,
+  .animate-spin-slow,
+  .card-holo-strip,
+  .card-avatar-ring,
+  .chain-pulse-active {
+    animation: none;
+  }
 }

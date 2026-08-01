@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
-import { getCardById } from "@/lib/chain";
+import { getCardById, getCardPosition } from "@/lib/chain";
 import { getLocale } from "@/lib/i18n";
+import { auth } from "@/auth";
 import { CardProfileClient } from "./CardProfileClient";
 
 export const dynamic = "force-dynamic";
@@ -10,12 +11,27 @@ interface PageProps {
 }
 
 export default async function CardPage({ params }: PageProps) {
-  const [{ id }, locale] = await Promise.all([params, getLocale()]);
+  const [{ id }, locale, session] = await Promise.all([params, getLocale(), auth()]);
   const cardId = Number(id);
   if (!Number.isInteger(cardId)) notFound();
 
   const card = await getCardById(cardId);
   if (!card) notFound();
 
-  return <CardProfileClient card={card} locale={locale} />;
+  // Tweet'i yalnızca kartın sahibi iliştirebilir; API de aynı kontrolü yapar.
+  const isOwner =
+    (session?.user?.username ?? "").toLowerCase() === card.xUsername.toLowerCase() &&
+    Boolean(session?.user?.username);
+
+  // Kart numarası zincirdeki sıradır, veritabanı id'si değil.
+  const position = await getCardPosition(card);
+
+  return (
+    <CardProfileClient
+      card={card}
+      position={position}
+      locale={locale}
+      isOwner={isOwner}
+    />
+  );
 }

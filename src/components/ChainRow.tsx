@@ -1,76 +1,114 @@
 import Link from "next/link";
-import type { Card } from "@/generated/prisma/client";
+import type { ChainNode, ChainState } from "@/lib/chain";
 import { isInviteExpired } from "@/lib/invite";
 import { Locale, t } from "@/lib/dictionary";
 import { Avatar } from "./Avatar";
 import { GoldenChain } from "./GoldenChain";
 
 interface ChainRowProps {
-  cards: Card[];
+  nodes: ChainNode[];
+  state: ChainState;
+  /** Kapanmış koleksiyonda bekleyen halka gösterilmez. */
+  isOpen?: boolean;
   locale: Locale;
 }
 
-export function ChainRow({ cards, locale }: ChainRowProps) {
+export function ChainRow({ nodes, state, isOpen = true, locale }: ChainRowProps) {
   const s = t(locale);
-  const tip = cards[cards.length - 1];
-  const hasPending = Boolean(tip?.targetUsername) && tip?.inviteStatus === "pending";
-  const expired = hasPending && isInviteExpired(tip);
+  const holder = state.turnHolder;
+  // Bekleyen halka sıradaki kişiye aittir; sıra geriye düştüyse eski uçtaki
+  // davet değil, sırayı elinde tutanın daveti gösterilir.
+  const pendingTarget =
+    isOpen && holder && holder.targetUsername && holder.inviteStatus === "pending"
+      ? holder
+      : null;
+  const pendingExpired = pendingTarget ? isInviteExpired(pendingTarget) : false;
 
   return (
-    <div className="flex items-center gap-1 overflow-x-auto py-4">
-      {cards.map((card, i) => (
+    <div className="flex items-center gap-1 overflow-x-auto px-2 py-6 scrollbar-none">
+      {nodes.map(({ card, burned, position }, i) => (
         <div key={card.id} className="flex shrink-0 items-center gap-1">
-          {i > 0 && <GoldenChain linkCount={3} className="w-10 shrink-0" />}
+          {i > 0 && (
+            <GoldenChain
+              linkCount={3}
+              className="w-10 shrink-0"
+              animated={!burned}
+              broken={burned}
+            />
+          )}
           <Link
             href={`/card/${card.id}`}
-            className="flex w-36 shrink-0 flex-col items-center gap-2 rounded-[17.6px] border border-bone/10 bg-carbon p-4 text-center transition hover:border-bone/30"
+            className={`glass-panel glass-panel-hover group relative flex w-36 shrink-0 flex-col items-center gap-2 rounded-[20px] p-4 text-center ${
+              burned ? "opacity-45 grayscale" : ""
+            }`}
           >
-            <div className="h-16 w-16 overflow-hidden rounded-full border border-bone/15">
+            {isOpen && !burned && holder?.id === card.id && (
+              <span className="absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-bone px-2 py-0.5 font-mono text-[8px] tracking-[0.15em] text-carbon">
+                {s.chainNode.turnBadge}
+              </span>
+            )}
+
+            <div
+              className={`relative h-16 w-16 overflow-hidden rounded-full border p-0.5 transition-transform duration-300 group-hover:scale-105 ${
+                burned
+                  ? "border-[rgba(var(--edge-rgb),0.15)]"
+                  : "border-[rgba(var(--edge-rgb),0.2)] group-hover:border-chrome"
+              }`}
+            >
               <Avatar
                 imageUrl={card.profileImageUrl}
                 username={card.xUsername}
-                className="h-full w-full object-cover"
+                className="h-full w-full rounded-full object-cover"
                 fallback={
-                  <div className="flex h-full w-full items-center justify-center bg-bone/5 text-xl font-[450] text-iron">
+                  <div className="flex h-full w-full items-center justify-center bg-steel-plate text-xl font-[450] text-ash">
                     {card.firstName.charAt(0).toUpperCase() || "?"}
                   </div>
                 }
               />
             </div>
+
             <div>
-              <p className="truncate text-sm font-[450] text-bone">
+              <p
+                className={`truncate text-sm font-[450] transition-colors ${
+                  burned ? "text-smoke line-through" : "text-bone group-hover:text-chrome"
+                }`}
+              >
                 {card.firstName} {card.lastName}
               </p>
-              <p className="text-[11px] text-smoke">@{card.xUsername}</p>
+              <p className="font-mono text-[11px] text-smoke">@{card.xUsername}</p>
             </div>
-            <span className="rounded-full border border-bone/10 px-2 py-0.5 text-[9px] text-iron">
-              #{card.id}
+
+            <span
+              className={`rounded-full border px-2.5 py-0.5 font-mono text-[9px] transition-colors ${
+                burned
+                  ? "border-[rgba(var(--edge-rgb),0.15)] text-smoke"
+                  : "border-[rgba(var(--edge-rgb),0.15)] bg-carbon/40 text-ash group-hover:border-[rgba(var(--edge-rgb),0.4)]"
+              }`}
+            >
+              {burned ? `[${s.chainNode.burned}]` : `#${position}`}
             </span>
           </Link>
         </div>
       ))}
 
-      {hasPending && (
+      {pendingTarget && (
         <div className="flex shrink-0 items-center gap-1">
           <GoldenChain linkCount={3} className="w-10 shrink-0" />
           <Link
-            href={expired ? `/card/${tip.id}` : `/invite/${tip.id}`}
-            className="flex w-36 shrink-0 flex-col items-center gap-2 rounded-[17.6px] border-2 border-dashed border-bone/15 bg-carbon p-4 text-center transition hover:border-bone/40"
+            href={pendingExpired ? `/card/${pendingTarget.id}` : `/invite/${pendingTarget.id}`}
+            className="glass-panel glass-panel-hover group relative flex w-36 shrink-0 flex-col items-center gap-2 rounded-[20px] border-dashed border-[rgba(var(--edge-rgb),0.25)] p-4 text-center"
           >
-            <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-dashed border-bone/20 text-2xl text-iron">
-              {expired ? "⌛" : "?"}
+            <div className="flex h-12 w-12 items-center justify-center rounded-full border border-dashed border-[rgba(var(--edge-rgb),0.3)] bg-steel-plate/30 transition-colors group-hover:border-[rgba(var(--edge-rgb),0.6)]">
+              <span className="text-smoke group-hover:text-bone">
+                {pendingExpired ? "↺" : "+"}
+              </span>
             </div>
             <div>
-              <p className="text-[9px] tracking-widest text-iron">
-                {s.chainNode.next}
+              <p className="text-[13px] font-[500] text-ash group-hover:text-bone">
+                {pendingExpired ? s.chainNode.expired : s.chainNode.pending}
               </p>
-              <p className="truncate text-[11px] text-smoke">
-                @{tip.targetUsername}
-              </p>
+              <p className="truncate text-[11px] text-smoke">@{pendingTarget.targetUsername}</p>
             </div>
-            <span className="rounded-full border border-bone/20 px-2 py-0.5 text-[9px] text-smoke">
-              {expired ? s.chainNode.expired : s.chainNode.pending}
-            </span>
           </Link>
         </div>
       )}

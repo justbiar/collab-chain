@@ -22,14 +22,66 @@ model Card {
   profileImageUrl String?
   logoImageUrl    String?
 
+  /// Üyenin zincire katıldığını duyurduğu tweet — sonradan kendi kartına ekler.
+  tweetUrl String?
+
+  /// Üyenin kendini kısaca tanıttığı metin — paylaşım tweet'ine de girer.
+  bio String @default("")
+
   // Bu kartın davet ettiği bir sonraki kişi (opsiyonel)
   targetUsername  String?
+  /// Etiketlenen kişinin neden takip edilmesi gerektiği — tweet'e girer.
+  targetReason    String  @default("")
   inviteStatus    String    @default("pending") // "pending" | "accepted"
+  // Etiketlenen kişinin daveti kabul etmesi için son an
   inviteExpiresAt DateTime?
+  // Zincire katılan bu üyenin birini etiketlemesi için son an
+  turnExpiresAt   DateTime?
+
+  // "active" | "eliminated" — süresinde kimseyi etiketlemeyip yerine
+  // başkası alındığında üye elenir ve bir daha zincire giremez.
+  status       String    @default("active")
+  eliminatedAt DateTime?
+
+  // --- Aşağıdakiler sadece KÖK kartta (parentId == null) anlamlıdır.
+  // Kök kartın sahibi aynı zamanda koleksiyonun yöneticisidir.
+
+  /// Koleksiyonun kendi kimliği — kurucunun adıyla anılmasın diye.
+  /// Örn. "Web3 Builders", "AI & LLM", "Blokzincir".
+  collectionName        String  @default("")
+  collectionDescription String  @default("")
+  coverImageUrl         String?
+
+  /// "live" | "completed" | "cancelled" | "dead"
+  /// dead = sıra kurucuya kadar düşüp süre dolduğu için dondu.
+  chainStatus String @default("live")
+
+  /// Doluysa ve gelecekteyse koleksiyon "yaklaşan" sayılır, katılım kapalıdır.
+  startsAt DateTime?
+
+  /// Koleksiyonun nasıl biteceği: "manual" | "deadline" | "limit"
+  completionMode String    @default("manual")
+  /// deadline modunda: bu an gelince koleksiyon otomatik tamamlanır.
+  deadlineAt     DateTime?
+  /// limit modunda: bu üye sayısına ulaşınca otomatik tamamlanır.
+  memberLimit    Int?
+
+  completedAt DateTime?
 
   parentId Int?
   parent   Card?  @relation("Chain", fields: [parentId], references: [id])
   children Card[] @relation("Chain")
 
   createdAt DateTime @default(now())
+
+  @@index([parentId])
+  @@index([xUsername])
+}
+
+/// Kuralı çiğneyip elenen X hesapları — tekrar zincire dahil olamazlar.
+model BannedUser {
+  id        Int      @id @default(autoincrement())
+  xUsername String   @unique
+  cardId    Int?
+  bannedAt  DateTime @default(now())
 }

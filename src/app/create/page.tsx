@@ -1,7 +1,15 @@
 import Link from "next/link";
-import { getCardById, isInviteExpired, INVITE_EXPIRY_HOURS } from "@/lib/chain";
+import {
+  getCardById,
+  getCardPosition,
+  isInviteExpired,
+  isUsernameBanned,
+  INVITE_EXPIRY_HOURS,
+} from "@/lib/chain";
 import { auth, signIn, signOut } from "@/auth";
 import { getLocale, t } from "@/lib/i18n";
+import { adminHandle, isAdminHandle } from "@/lib/admin";
+import { GateScreen } from "@/components/GateScreen";
 import { CreateClient } from "./CreateClient";
 
 export const dynamic = "force-dynamic";
@@ -33,16 +41,16 @@ export default async function CreatePage({ searchParams }: PageProps) {
     }
   }
 
-  // Genesis akışı (davetsiz yeni zincir başlatma): sadece admin X hesabı serbest
+  // Genesis akışı (davetsiz yeni zincir başlatma): sadece admin X hesabı serbest.
+  // Aynı kontrol /api/cards içinde de var — burası sadece arayüz kapısı.
   if (parentId == null && !inviteError) {
-    const adminUsername = process.env.ADMIN_X_USERNAME ?? "";
+    const adminUsername = adminHandle();
     const session = await auth();
-    const sessionHandle = (session?.user?.username ?? "").toLowerCase();
 
-    if (!adminUsername || sessionHandle !== adminUsername.toLowerCase()) {
+    if (!isAdminHandle(session?.user?.username)) {
       return (
-        <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-carbon px-4 text-center">
-          <p className="text-lg font-[450] text-bone">
+        <GateScreen>
+          <p className="text-lg font-[500] text-bone">
             {s.genesisLockedTitle(adminUsername)}
           </p>
           <p className="max-w-sm text-sm text-smoke">
@@ -52,32 +60,29 @@ export default async function CreatePage({ searchParams }: PageProps) {
             href={`https://x.com/${adminUsername}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-full bg-bone px-6 py-3 text-[15px] font-[500] tracking-[-0.02em] text-carbon transition hover:bg-ash"
+            className="btn-metallic-silver rounded-full px-7 py-3 text-[15px] font-[500] tracking-[-0.02em]"
           >
             {s.contactCta}
           </a>
 
-          <div className="mt-4 flex flex-col items-center gap-2 border-t border-bone/10 pt-4">
-            <p className="text-xs text-iron">{s.adminSignInHint(adminUsername)}</p>
+          <div className="mt-3 flex w-full flex-col items-center gap-2 border-t border-[rgba(var(--edge-rgb),0.12)] pt-4">
+            <p className="text-xs text-smoke">{s.adminSignInHint(adminUsername)}</p>
             <form
               action={async () => {
                 "use server";
                 await signIn("twitter", { redirectTo: "/create" });
               }}
             >
-              <button
-                type="submit"
-                className="rounded-full border border-bone/20 px-4 py-2 text-xs text-bone transition hover:bg-bone/5"
-              >
+              <button type="submit" className="btn-metallic-ghost rounded-full px-4 py-2 text-xs">
                 {s.signInWithX}
               </button>
             </form>
           </div>
 
-          <Link href="/" className="text-xs text-iron underline">
+          <Link href="/" className="text-xs text-smoke underline">
             {s.backHome}
           </Link>
-        </div>
+        </GateScreen>
       );
     }
   }
@@ -89,8 +94,8 @@ export default async function CreatePage({ searchParams }: PageProps) {
 
     if (!session?.user) {
       return (
-        <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-carbon px-4 text-center">
-          <p className="text-lg font-[450] text-bone">
+        <GateScreen>
+          <p className="text-lg font-[500] text-bone">
             {s.authRequiredTitle(parentCard.targetUsername ?? "")}
           </p>
           <p className="max-w-sm text-sm text-smoke">
@@ -106,23 +111,37 @@ export default async function CreatePage({ searchParams }: PageProps) {
           >
             <button
               type="submit"
-              className="rounded-full bg-bone px-6 py-3 text-[15px] font-[500] tracking-[-0.02em] text-carbon transition hover:bg-ash"
+              className="btn-metallic-silver rounded-full px-7 py-3 text-[15px] font-[500] tracking-[-0.02em]"
             >
               {s.signInWithX}
             </button>
           </form>
-          <Link href="/" className="text-xs text-iron underline">
+          <Link href="/" className="text-xs text-smoke underline">
             {s.backHome}
           </Link>
-        </div>
+        </GateScreen>
+      );
+    }
+
+    // Elenmiş hesap daveti kabul edemez — API de reddederdi ama kullanıcıya
+    // formu doldurttuktan sonra değil, girişte söylemek gerekiyor.
+    if (await isUsernameBanned(session.user.username ?? "")) {
+      return (
+        <GateScreen>
+          <p className="text-lg font-[500] text-bone">{s.bannedTitle}</p>
+          <p className="max-w-sm text-sm text-smoke">{s.bannedBody}</p>
+          <Link href="/" className="text-xs text-smoke underline">
+            {s.backHome}
+          </Link>
+        </GateScreen>
       );
     }
 
     const sessionHandle = (session.user.username ?? "").toLowerCase();
     if (sessionHandle !== target) {
       return (
-        <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-carbon px-4 text-center">
-          <p className="text-lg font-[450] text-bone">{s.notYoursTitle}</p>
+        <GateScreen>
+          <p className="text-lg font-[500] text-bone">{s.notYoursTitle}</p>
           <p className="max-w-sm text-sm text-smoke">
             {s.notYoursBody(
               parentCard.targetUsername ?? "",
@@ -137,25 +156,30 @@ export default async function CreatePage({ searchParams }: PageProps) {
           >
             <button
               type="submit"
-              className="rounded-full border border-bone/20 px-6 py-3 text-[15px] text-bone transition hover:bg-bone/5"
+              className="btn-metallic-ghost rounded-full px-6 py-3 text-[15px]"
             >
               {s.signOutRetry}
             </button>
           </form>
-          <Link href="/" className="text-xs text-iron underline">
+          <Link href="/" className="text-xs text-smoke underline">
             {s.backHome}
           </Link>
-        </div>
+        </GateScreen>
       );
     }
   }
 
+  // Önizlemede kişinin zincirde alacağı gerçek sıra gösterilir.
+  const activeParent = inviteError ? null : parentCard;
+  const nextPosition = activeParent ? (await getCardPosition(activeParent)) + 1 : 1;
+
   return (
     <CreateClient
       parentId={inviteError ? null : parentId}
-      parentCard={inviteError ? null : parentCard}
+      parentCard={activeParent}
       inviteError={inviteError}
       inviteExpiryHours={INVITE_EXPIRY_HOURS}
+      nextPosition={nextPosition}
       locale={locale}
     />
   );

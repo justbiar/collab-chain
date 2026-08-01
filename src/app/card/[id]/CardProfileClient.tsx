@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { GradedCard } from "@/components/GradedCard";
 import { ChainShareGraphic } from "@/components/ChainShareGraphic";
+import { TweetPanel } from "@/components/TweetPanel";
+import { FitToWidth } from "@/components/FitToWidth";
 import { CardData } from "@/lib/types";
 import { downloadNodeAsImage } from "@/lib/download-image";
 import { buildChainTweetIntent } from "@/lib/twitter-share";
@@ -14,7 +16,18 @@ import type { Card } from "@/generated/prisma/client";
 
 type Tab = "card" | "chain";
 
-export function CardProfileClient({ card, locale }: { card: Card; locale: Locale }) {
+export function CardProfileClient({
+  card,
+  position,
+  locale,
+  isOwner,
+}: {
+  card: Card;
+  /** Zincirdeki sıra — kartın üstünde gösterilen numara. */
+  position: number;
+  locale: Locale;
+  isOwner: boolean;
+}) {
   const s = t(locale).profile;
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("card");
@@ -33,9 +46,11 @@ export function CardProfileClient({ card, locale }: { card: Card; locale: Locale
     xUsername: card.xUsername,
     role: card.role,
     skills: card.skills,
+    bio: card.bio,
     profileImageUrl: card.profileImageUrl,
     logoImageUrl: card.logoImageUrl,
     targetUsername: card.targetUsername ?? "",
+    targetReason: card.targetReason,
   };
 
   const hasTarget = Boolean(card.targetUsername);
@@ -60,7 +75,15 @@ export function CardProfileClient({ card, locale }: { card: Card; locale: Locale
 
   const handleShare = () => {
     const inviteUrl = `${window.location.origin}/invite/${card.id}`;
-    const url = buildChainTweetIntent(card.targetUsername ?? "", inviteUrl, locale);
+    const url = buildChainTweetIntent(
+      {
+        targetUsername: card.targetUsername ?? "",
+        bio: card.bio,
+        targetReason: card.targetReason,
+      },
+      inviteUrl,
+      locale
+    );
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
@@ -101,61 +124,75 @@ export function CardProfileClient({ card, locale }: { card: Card; locale: Locale
   const create = t(locale).create;
 
   return (
-    <div className="min-h-screen w-full overflow-x-hidden bg-carbon px-4 py-10 sm:px-8">
-      <header className="mx-auto mb-8 max-w-6xl text-center">
-        <p className="text-[19px] tracking-[-0.03em] text-ash">#{card.id}</p>
-        <p className="mt-1 text-[35px] font-[450] leading-[1.1] tracking-[-0.04em] text-bone">
+    <div className="bg-blueprint-grid relative min-h-screen w-full overflow-x-hidden px-4 pt-28 pb-10 sm:px-8 sm:pt-24">
+      {/* Authkit Ambient background glows */}
+      <div aria-hidden className="ambient-blue-aura" />
+      <div aria-hidden className="ambient-blueprint-aura" />
+
+      <header className="relative z-10 mx-auto mb-8 max-w-6xl text-center">
+        <p className="font-mono text-[19px] tracking-[-0.03em] text-bone">#{position}</p>
+        <p className="mt-1 text-[44px] font-[800] leading-[1.05] tracking-[-0.04em] text-gradient-ice">
           {card.firstName} {card.lastName}
         </p>
+
         <p className="mt-2 text-[15px] text-smoke">
-          @{card.xUsername} {card.role && `· ${card.role}`}
+          <Link href={`/u/${card.xUsername}`} className="font-mono underline-offset-4 hover:text-bone hover:underline">
+            @{card.xUsername}
+          </Link>
+          {card.role && ` · ${card.role}`}
         </p>
+
+        {card.bio && (
+          <p className="mx-auto mt-4 max-w-md text-[15px] leading-relaxed text-ash">
+            {card.bio}
+          </p>
+        )}
       </header>
 
-      <main className="mx-auto flex max-w-6xl flex-col items-center gap-6">
-        <div className="flex rounded-full border border-bone/10 p-1">
+      <main className="relative z-10 mx-auto flex max-w-6xl flex-col items-center gap-6">
+
+        <div className="metallic-panel flex rounded-full p-1">
           <button
             onClick={() => setTab("card")}
-            className={`rounded-full px-5 py-2 text-xs tracking-wider transition ${
+            className={`rounded-full px-5 py-2 font-mono text-xs tracking-wider transition ${
               tab === "card"
-                ? "bg-bone text-carbon"
-                : "text-iron hover:text-bone"
+                ? "btn-metallic-silver"
+                : "text-smoke hover:text-bone"
             }`}
           >
-            {create.tabCard}
+            {tab === "card" ? `[${create.tabCard}]` : create.tabCard}
           </button>
           {hasTarget && (
             <button
               onClick={() => setTab("chain")}
-              className={`rounded-full px-5 py-2 text-xs tracking-wider transition ${
+              className={`rounded-full px-5 py-2 font-mono text-xs tracking-wider transition ${
                 tab === "chain"
-                  ? "bg-bone text-carbon"
-                  : "text-iron hover:text-bone"
+                  ? "btn-metallic-silver"
+                  : "text-smoke hover:text-bone"
               }`}
             >
-              {create.tabChain}
+              {tab === "chain" ? `[${create.tabChain}]` : create.tabChain}
             </button>
           )}
         </div>
 
-        <div className="w-full max-w-full overflow-x-auto rounded-[17.6px] border border-bone/10 bg-carbon p-6 sm:p-10">
-          <div className={tab === "card" ? "flex justify-center" : "hidden"}>
-            <GradedCard ref={cardRef} data={data} cardNumber={card.id} locale={locale} />
-          </div>
-          {hasTarget && (
-            <div
-              className={
-                tab === "chain"
-                  ? "mx-auto aspect-[1200/630] w-full max-w-[720px] overflow-hidden"
-                  : "hidden"
-              }
-            >
-              <div
-                className="origin-top-left scale-[0.6]"
-                style={{ width: 1200, height: 630 }}
-              >
+        <div className="metallic-panel w-full max-w-full rounded-[22px] p-4 sm:p-10">
+          {/* Sadece aktif sekme render edilir: gizli bir sekmenin ölçüsü
+              alınamadığı için ölçekleme yanlış hesaplanıyordu. */}
+          {tab === "card" && (
+            <div className="mockup-stage pt-4 pb-28">
+              <FitToWidth designWidth={400}>
+                <div className="mockup-reflect">
+                  <GradedCard ref={cardRef} data={data} cardNumber={position} locale={locale} />
+                </div>
+              </FitToWidth>
+            </div>
+          )}
+          {hasTarget && tab === "chain" && (
+            <div className="mx-auto w-full max-w-[720px]">
+              <FitToWidth designWidth={1200}>
                 <ChainShareGraphic ref={chainRef} data={data} locale={locale} />
-              </div>
+              </FitToWidth>
             </div>
           )}
         </div>
@@ -164,22 +201,30 @@ export function CardProfileClient({ card, locale }: { card: Card; locale: Locale
           <button
             onClick={handleDownload}
             disabled={isDownloading}
-            className="flex-1 rounded-full border border-bone/20 px-5 py-3 text-[15px] tracking-[-0.02em] text-bone transition hover:bg-bone/5 disabled:opacity-50"
+            className="metallic-panel metallic-panel-hover flex-1 rounded-full px-5 py-3 text-[15px] tracking-[-0.01em] text-white disabled:opacity-50"
           >
             {isDownloading ? s.downloading : s.pngDownload}
           </button>
           {hasTarget && card.inviteStatus === "pending" && !expired && (
             <button
               onClick={handleShare}
-              className="flex-1 rounded-full bg-bone px-5 py-3 text-[15px] font-[500] tracking-[-0.02em] text-carbon transition hover:bg-ash"
+              className="btn-metallic-silver flex-1 rounded-full px-5 py-3 text-[15px] tracking-[-0.01em]"
             >
               {s.shareOnX}
             </button>
           )}
         </div>
 
+        <TweetPanel
+          cardId={card.id}
+          tweetUrl={card.tweetUrl}
+          isOwner={isOwner}
+          locale={locale}
+        />
+
+
         {hasTarget && (
-          <div className="flex w-full max-w-md flex-col items-center gap-3 rounded-[17.6px] border border-bone/10 p-4 text-center">
+          <div className="metallic-panel flex w-full max-w-md flex-col items-center gap-3 rounded-[22px] p-5 text-center">
             <p className="text-xs text-smoke">
               {card.inviteStatus === "accepted"
                 ? s.accepted(card.targetUsername ?? "")
@@ -187,6 +232,12 @@ export function CardProfileClient({ card, locale }: { card: Card; locale: Locale
                   ? s.expired(card.targetUsername ?? "")
                   : s.pending(card.targetUsername ?? "", remainingHours)}
             </p>
+
+            {card.targetReason && (
+              <p className="max-w-sm text-[13px] leading-relaxed text-ash">
+                “{card.targetReason}”
+              </p>
+            )}
 
             {card.inviteStatus === "pending" && !expired && (
               <button

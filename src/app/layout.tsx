@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { getLocale, t } from "@/lib/i18n";
 import { SiteControls } from "@/components/SiteControls";
+import { AuthControl } from "@/components/AuthControl";
+import { SocialLinks } from "@/components/SocialLinks";
 import "./globals.css";
 
 const inter = Inter({
@@ -15,6 +17,14 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: s.siteName,
     description: s.siteTagline,
+    icons: {
+      icon: [
+        { url: "/favicon.ico", sizes: "any" },
+        { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+        { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+      ],
+      apple: "/apple-touch-icon.png",
+    },
   };
 }
 
@@ -47,8 +57,9 @@ export default async function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body className="min-h-full flex flex-col bg-carbon text-bone">
-        <SiteControls locale={locale} />
+        <SiteControls locale={locale} authSlot={<AuthControl />} />
         {children}
+        <SocialLinks />
       </body>
     </html>
   );

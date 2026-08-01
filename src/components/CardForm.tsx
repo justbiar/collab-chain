@@ -3,6 +3,7 @@
 import { ChangeEvent } from "react";
 import { CardData } from "@/lib/types";
 import { readFileAsDataUrl } from "@/lib/download-image";
+import { BIO_MAX, REASON_MAX } from "@/lib/twitter-share";
 import { Locale, t } from "@/lib/dictionary";
 
 interface CardFormProps {
@@ -96,6 +97,24 @@ export function CardForm({ data, onChange, locale, lockedUsername }: CardFormPro
         />
       </div>
 
+      <div>
+        <FieldLabel>{s.bio}</FieldLabel>
+        <textarea
+          rows={2}
+          maxLength={BIO_MAX}
+          className={`${inputClass} resize-none`}
+          value={data.bio}
+          onChange={(e) => update({ bio: e.target.value })}
+          placeholder={s.bioPlaceholder}
+        />
+        <div className="mt-1.5 flex items-start justify-between gap-3">
+          <p className="text-[11px] text-iron">{s.bioHint}</p>
+          <span className="shrink-0 font-mono text-[10px] text-iron">
+            {data.bio.length}/{BIO_MAX}
+          </span>
+        </div>
+      </div>
+
       <div className="grid grid-cols-2 gap-3">
         <div>
           <FieldLabel>{s.profileImage}</FieldLabel>
@@ -117,14 +136,37 @@ export function CardForm({ data, onChange, locale, lockedUsername }: CardFormPro
         </div>
       </div>
 
-      <div className="border-t border-bone/10 pt-4">
-        <FieldLabel>{s.targetUsername}</FieldLabel>
-        <input
-          className={inputClass}
-          value={data.targetUsername}
-          onChange={(e) => update({ targetUsername: e.target.value })}
-          placeholder={s.targetPlaceholder}
-        />
+      <div className="space-y-4 border-t border-bone/10 pt-4">
+        <div>
+          <FieldLabel>{s.targetUsername}</FieldLabel>
+          <input
+            className={inputClass}
+            value={data.targetUsername}
+            onChange={(e) => update({ targetUsername: e.target.value })}
+            placeholder={s.targetPlaceholder}
+          />
+        </div>
+
+        {/* Sebep ancak biri etiketlendiyse anlamlı. */}
+        {data.targetUsername.trim() && (
+          <div>
+            <FieldLabel>{s.targetReason}</FieldLabel>
+            <textarea
+              rows={2}
+              maxLength={REASON_MAX}
+              className={`${inputClass} resize-none`}
+              value={data.targetReason}
+              onChange={(e) => update({ targetReason: e.target.value })}
+              placeholder={s.targetReasonPlaceholder}
+            />
+            <div className="mt-1.5 flex items-start justify-between gap-3">
+              <p className="text-[11px] text-iron">{s.targetReasonHint}</p>
+              <span className="shrink-0 font-mono text-[10px] text-iron">
+                {data.targetReason.length}/{REASON_MAX}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -140,6 +140,41 @@ circularXx weight 400 at 15px in #999999, centered, single line. No icon, no dec
 - Don't add gradients, glows, or color washes — the aesthetic depends on flat darkness and pure contrast.
 - Don't use icons in colored fills — all icons are white strokes on dark, or black strokes on light.
 
+## Metallic Surface System (implemented)
+
+The palette above is the *origin* reference. What ships is its metal-finished descendant: still strictly achromatic, but surfaces read as machined material rather than flat ink. There is no chromatic accent anywhere in the chrome — no blue, no brand hue. Hierarchy comes from how light behaves on the surface.
+
+**Runtime tokens** live in `globals.css` and are theme-aware (`:root` / `:root[data-theme="light"]`): `--carbon`, `--bone`, `--ash`, `--smoke`, `--iron`, plus the metal set `--chrome`, `--graphite`, `--steel-plate`. `--edge-rgb` and `--grid-line-rgb` carry the hairline/grid colour so borders flip with the theme instead of being hardcoded.
+
+| Class | Role |
+|-------|------|
+| `.metallic-panel` / `.glass-panel` | Brushed graphite plate, chrome hairline border, inset top highlight + bottom shade |
+| `.btn-metallic-silver` | The single raised action surface — polished silver pill, black label. Also used for the active state of toggles/tabs |
+| `.btn-metallic-ghost` | Secondary control, etched into the plate rather than raised |
+| `.text-gradient-ice` | Polished chrome lettering for display type (inverts to dark chrome in light mode) |
+| `.bg-blueprint-grid` | Faint milled grid on the base plate |
+| `.ambient-blue-aura` / `.ambient-blueprint-aura` | Cold specular pooling. Names are historical — the light is achromatic |
+
+**Do not** reintroduce a chromatic accent for interactive state. Active/selected is expressed by promoting a surface to polished silver, not by colouring it.
+
+## Album-Cover Mockup Stage
+
+**Scope:** `.mockup-stage`, `.mockup-reflect` in `globals.css`.
+
+Cards are presented the way album artwork is shown in a product mockup, not as flat UI: a raked spotlight behind the object, a soft contact shadow where it meets the floor, and a gallery reflection below it. Wrap the display area in `.mockup-stage` (with bottom padding for the reflection to occupy) and the object itself in `.mockup-reflect`. The reflection uses `-webkit-box-reflect`, which Chromium and Safari honour; Firefox simply renders no reflection, which is an acceptable degradation since the spotlight and contact shadow still carry the effect.
+
+## Card Component Exception
+
+**Scope:** `GradedCard.tsx`, `ChainShareGraphic.tsx`, `GoldenChain.tsx` (`card-*` / `chain-link-gold` classes in `globals.css`).
+
+The collectible trading-card components deliberately break the achromatic rule. A physical PSA-graded slab has a machined case, a printed white grading label, and colored art behind the window — flattening that to grayscale would defeat the reference. The case is chrome (`.card-plastic`), the label is near-white with black type, and the art plate is a fixed cosmic-violet palette (`.card-nebula`). These use hardcoded colors rather than the theme tokens, so the card renders identically regardless of the site's light/dark toggle — it's a collectible object, not a themed UI surface. The gold chain finish is likewise fixed. Everything outside these components follows the metallic system unchanged.
+
+One trap worth naming: `.card-avatar-ring` animates its conic gradient through the registered `--ring-angle` custom property, **not** via `transform: rotate()`. Rotating the box would drag the portrait inside it around with it.
+
+## Technical/Terminal Accent (chrome & system state)
+
+Inspired by activetheory.net's monospace pill-nav and readouts, scoped narrowly: content (headlines, body copy, form labels) stays in the sans system font. `font-mono` (system stack — no new font asset) is used only for **system-state and identity atoms**: X handles (`@user`), card/player IDs, card numbers (`#N`), and status pills (`ACTIVE`, `PENDING`, `EXPIRED`, `NEXT UP`). Square brackets mark a value as "currently on/selected/this state" — the active language toggle (`[TR]`), the active tab (`[KOLEKSİYON KARTI]`), and every status pill (`[ACTIVE]`). This is a typography-only convention — no new dependencies, no motion, no cursor/scroll effects.
+
 ## Surfaces
 
 | Level | Name | Value | Purpose |
@@ -159,11 +194,14 @@ Full-bleed page model with no persistent sidebar. Navigation is a minimal top ba
 ## Agent Prompt Guide
 
 ## Quick Color Reference
-- text: #ffffff (primary), #e5e7eb (secondary), #999999 (tertiary)
-- background: #000000 (dark sections), #e5e7eb (light sections), #ffffff (cards on light)
-- border: #e5e7eb at 10-20% opacity (dark mode), #bfbfbf (light mode)
-- accent: none — monochrome only
-- primary action: no distinct CTA color
+
+> Superseded by the **Metallic Surface System** section above — that describes what actually ships. Use the CSS variables, not these literals.
+
+- text: `--bone` (primary), `--ash` (secondary), `--smoke` (tertiary)
+- background: `--carbon` base plate, `--steel-plate` / `--graphite` for panels
+- border: `rgba(var(--edge-rgb), 0.14)` hairline; 0.32 on hover
+- accent: none — achromatic only, in both themes
+- primary action: `.btn-metallic-silver` (polished silver pill, no hue)
 
 ## Example Component Prompts
 1. **Section Title Block**: Two stacked centered lines on #000000. Line 1: circularXx weight 400, 21px, #e5e7eb, letter-spacing -0.61px. Line 2: circularXx weight 450, 53px, #ffffff, letter-spacing -3.18px, line-height 0.80. 12px vertical gap between lines.

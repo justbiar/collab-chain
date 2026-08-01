@@ -4,9 +4,17 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { CardForm } from "@/components/CardForm";
+import { GateScreen } from "@/components/GateScreen";
+import { FitToWidth } from "@/components/FitToWidth";
 import { GradedCard } from "@/components/GradedCard";
 import { ChainShareGraphic } from "@/components/ChainShareGraphic";
-import { CardData, EMPTY_CARD_DATA } from "@/lib/types";
+import { CollectionSettingsForm } from "@/components/CollectionSettingsForm";
+import {
+  CardData,
+  CollectionFormData,
+  EMPTY_CARD_DATA,
+  EMPTY_COLLECTION_FORM,
+} from "@/lib/types";
 import { Locale, t } from "@/lib/dictionary";
 import type { Card } from "@/generated/prisma/client";
 
@@ -17,6 +25,8 @@ interface CreateClientProps {
   parentCard: Card | null;
   inviteError: string | null;
   inviteExpiryHours: number;
+  /** Bu kişinin zincirde alacağı sıra — kart üstünde gösterilen numara. */
+  nextPosition: number;
   locale: Locale;
 }
 
@@ -25,6 +35,7 @@ export function CreateClient({
   parentCard,
   inviteError,
   inviteExpiryHours,
+  nextPosition,
   locale,
 }: CreateClientProps) {
   const s = t(locale).create;
@@ -36,21 +47,28 @@ export function CreateClient({
   const [tab, setTab] = useState<Tab>("card");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Ayarlar yalnızca yeni koleksiyon açılırken sorulur.
+  const isNewCollection = parentId == null;
+  const [collection, setCollection] = useState<CollectionFormData>(EMPTY_COLLECTION_FORM);
 
   if (inviteError) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-carbon px-4 text-center">
-        <p className="text-lg font-[450] text-bone">{inviteError}</p>
-        <Link href="/" className="text-smoke underline">
+      <GateScreen>
+        <p className="text-lg font-[500] text-bone">{inviteError}</p>
+        <Link href="/" className="text-sm text-smoke underline">
           {s.backHome}
         </Link>
-      </div>
+      </GateScreen>
     );
   }
 
   const handleSave = async () => {
     if (!data.firstName.trim() || !data.xUsername.trim()) {
       setError(s.requiredFields);
+      return;
+    }
+    if (isNewCollection && !collection.name.trim()) {
+      setError(t(locale).collection.nameRequired);
       return;
     }
 
@@ -60,22 +78,29 @@ export function CreateClient({
       const res = await fetch("/api/cards", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, parentId }),
+        body: JSON.stringify({
+          ...data,
+          parentId,
+          collection: isNewCollection ? collection : undefined,
+        }),
       });
       const json = await res.json();
 
       if (!res.ok) {
-        setError(
-          json.error === "INVITE_ALREADY_ACCEPTED"
-            ? s.errorAlreadyAccepted
-            : json.error === "USERNAME_MISMATCH"
-              ? s.errorUsernameMismatch
-              : json.error === "INVITE_EXPIRED"
-                ? s.errorExpired
-                : json.error === "NOT_AUTHENTICATED"
-                  ? s.errorNotAuthenticated
-                  : (json.error ?? s.errorGeneric)
-        );
+        const messages: Record<string, string> = {
+          INVITE_ALREADY_ACCEPTED: s.errorAlreadyAccepted,
+          USERNAME_MISMATCH: s.errorUsernameMismatch,
+          INVITE_EXPIRED: s.errorExpired,
+          NOT_AUTHENTICATED: s.errorNotAuthenticated,
+          USER_BANNED: s.errorBanned,
+          NOT_YOUR_TURN: s.errorNotYourTurn,
+          CHAIN_DEAD: s.errorChainDead,
+          COLLECTION_CLOSED: s.errorChainDead,
+          COLLECTION_NOT_STARTED: s.errorNotStarted,
+          NOT_ADMIN: s.errorNotAdmin,
+          COLLECTION_NAME_REQUIRED: t(locale).collection.nameRequired,
+        };
+        setError(messages[json.error as string] ?? json.error ?? s.errorGeneric);
         return;
       }
 
@@ -88,65 +113,82 @@ export function CreateClient({
   };
 
   return (
-    <div className="min-h-screen w-full overflow-x-hidden bg-carbon px-4 py-10 sm:px-8">
-      <header className="mx-auto mb-8 max-w-6xl text-center">
-        <p className="text-[19px] tracking-[-0.03em] text-ash">
+    <div className="bg-blueprint-grid relative min-h-screen w-full overflow-x-hidden px-4 pt-28 pb-10 sm:px-8 sm:pt-24">
+      {/* Authkit Ambient background glows */}
+      <div aria-hidden className="ambient-blue-aura" />
+      <div aria-hidden className="ambient-blueprint-aura" />
+
+      <header className="relative z-10 mx-auto mb-12 max-w-4xl text-center">
+        <p className="font-mono text-[19px] tracking-[-0.03em] text-bone uppercase">
           {parentCard ? s.titleAccept : s.titleNew}
         </p>
         {parentCard && (
-          <p className="mt-3 text-sm text-smoke">
+          <p className="mt-2 text-sm text-ash">
             {s.invitedBy(parentCard.firstName, parentCard.lastName, parentCard.xUsername)}
           </p>
         )}
-        <p className="mt-2 text-[15px] text-iron">{s.instructions}</p>
+        <p className="mt-2 text-[15px] text-ash">{s.instructions}</p>
+
         <p className="mt-1 text-[13px] text-iron">{s.expiryNote(inviteExpiryHours)}</p>
       </header>
 
-      <main className="mx-auto grid max-w-6xl min-w-0 gap-8 lg:grid-cols-[380px_1fr]">
-        <CardForm data={data} onChange={setData} locale={locale} lockedUsername={lockedUsername} />
+
+      <main className="relative z-10 mx-auto grid max-w-6xl min-w-0 gap-8 lg:grid-cols-[380px_1fr]">
+
+        <div className="space-y-6">
+          <CardForm data={data} onChange={setData} locale={locale} lockedUsername={lockedUsername} />
+          {isNewCollection && (
+            <CollectionSettingsForm
+              value={collection}
+              onChange={setCollection}
+              locale={locale}
+            />
+          )}
+        </div>
 
         <section className="flex min-w-0 flex-col items-center gap-6">
-          <div className="flex rounded-full border border-bone/10 p-1">
+          <div className="metallic-panel flex rounded-full p-1">
             <button
               onClick={() => setTab("card")}
-              className={`rounded-full px-5 py-2 text-xs tracking-wider transition ${
+              className={`rounded-full px-5 py-2 font-mono text-xs tracking-wider transition ${
                 tab === "card"
-                  ? "bg-bone text-carbon"
-                  : "text-iron hover:text-bone"
+                  ? "btn-metallic-silver"
+                  : "text-smoke hover:text-bone"
               }`}
             >
-              {s.tabCard}
+              {tab === "card" ? `[${s.tabCard}]` : s.tabCard}
             </button>
             <button
               onClick={() => setTab("chain")}
-              className={`rounded-full px-5 py-2 text-xs tracking-wider transition ${
+              className={`rounded-full px-5 py-2 font-mono text-xs tracking-wider transition ${
                 tab === "chain"
-                  ? "bg-bone text-carbon"
-                  : "text-iron hover:text-bone"
+                  ? "btn-metallic-silver"
+                  : "text-smoke hover:text-bone"
               }`}
             >
-              {s.tabChain}
+              {tab === "chain" ? `[${s.tabChain}]` : s.tabChain}
             </button>
           </div>
 
-          <div className="w-full max-w-full overflow-x-auto rounded-[17.6px] border border-bone/10 bg-carbon p-6 sm:p-10">
-            <div className={tab === "card" ? "flex justify-center" : "hidden"}>
-              <GradedCard data={data} cardNumber={1} locale={locale} />
-            </div>
-            <div
-              className={
-                tab === "chain"
-                  ? "mx-auto aspect-[1200/630] w-full max-w-[720px] overflow-hidden"
-                  : "hidden"
-              }
-            >
-              <div
-                className="origin-top-left scale-[0.6]"
-                style={{ width: 1200, height: 630 }}
-              >
-                <ChainShareGraphic data={data} locale={locale} />
+          <div className="metallic-panel w-full max-w-full rounded-[22px] p-4 sm:p-10">
+            {/* Sadece aktif sekme render edilir — gizli sekmenin ölçüsü
+                alınamadığı için ölçekleme yanlış çıkıyordu. */}
+            {tab === "card" && (
+              <div className="mockup-stage pt-4 pb-28">
+                <FitToWidth designWidth={400}>
+                  <div className="mockup-reflect">
+                    <GradedCard data={data} cardNumber={nextPosition} locale={locale} />
+                  </div>
+                </FitToWidth>
               </div>
-            </div>
+            )}
+            {tab === "chain" && (
+              <div className="mx-auto w-full max-w-[720px]">
+                <FitToWidth designWidth={1200}>
+                  <ChainShareGraphic data={data} locale={locale} />
+                </FitToWidth>
+              </div>
+            )}
           </div>
 
           {error && <p className="text-sm text-red-400">{error}</p>}
@@ -154,10 +196,11 @@ export function CreateClient({
           <button
             onClick={handleSave}
             disabled={isSaving}
-            className="w-full max-w-md rounded-full bg-bone px-5 py-4 text-[15px] font-[500] tracking-[-0.02em] text-carbon transition hover:bg-ash disabled:opacity-50"
+            className="btn-metallic-silver w-full max-w-md rounded-full px-5 py-4 text-[15px] tracking-[-0.01em] disabled:opacity-50"
           >
             {isSaving ? s.saving : parentCard ? s.saveAccept : s.saveNew}
           </button>
+
         </section>
       </main>
     </div>

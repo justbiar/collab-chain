@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getCardById, isInviteExpired } from "@/lib/chain";
 import { prisma } from "@/lib/prisma";
 import { getLocale, t } from "@/lib/i18n";
+import { GateScreen } from "@/components/GateScreen";
 import { InvitePreview } from "./InvitePreview";
 
 export const dynamic = "force-dynamic";
@@ -22,43 +23,46 @@ export default async function InvitePage({ params }: PageProps) {
 
   if (!parent.targetUsername) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-carbon px-4 text-center">
-        <p className="text-lg font-[450] text-bone">{s.noTarget}</p>
-        <Link href="/" className="text-smoke underline">
+      <GateScreen>
+        <p className="text-lg font-[500] text-bone">{s.noTarget}</p>
+        <Link href="/" className="text-sm text-smoke underline">
           {s.backHomePlain}
         </Link>
-      </div>
+      </GateScreen>
     );
   }
 
   if (parent.inviteStatus === "accepted") {
     const child = await prisma.card.findFirst({ where: { parentId } });
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-carbon px-4 text-center">
-        <p className="text-lg font-[450] text-bone">{s.alreadyAccepted}</p>
+      <GateScreen>
+        <p className="text-lg font-[500] text-bone">{s.alreadyAccepted}</p>
         {child && (
-          <Link href={`/card/${child.id}`} className="text-smoke underline">
+          <Link
+            href={`/card/${child.id}`}
+            className="btn-metallic-silver rounded-full px-6 py-3 text-[15px] font-[500]"
+          >
             {s.viewCard(child.xUsername)}
           </Link>
         )}
-        <Link href="/" className="text-xs text-iron underline">
+        <Link href="/" className="text-xs text-smoke underline">
           {s.backHome}
         </Link>
-      </div>
+      </GateScreen>
     );
   }
 
   if (isInviteExpired(parent)) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-carbon px-4 text-center">
-        <p className="text-lg font-[450] text-bone">{s.expiredTitle}</p>
+      <GateScreen>
+        <p className="text-lg font-[500] text-bone">{s.expiredTitle}</p>
         <p className="max-w-sm text-sm text-smoke">
           {s.expiredBody(parent.firstName, parent.lastName, parent.targetUsername ?? "")}
         </p>
-        <Link href="/" className="text-xs text-iron underline">
+        <Link href="/" className="text-xs text-smoke underline">
           {s.backHome}
         </Link>
-      </div>
+      </GateScreen>
     );
   }
 
