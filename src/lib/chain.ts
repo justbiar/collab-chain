@@ -60,6 +60,9 @@ const CHAIN_ERROR_STATUS: Record<string, number> = {
   INVALID_IMAGE: 400,
   ALREADY_MEMBER: 409,
   USERNAME_REQUIRED: 400,
+  ALREADY_MINTED: 409,
+  WALLET_REQUIRED: 400,
+  INVALID_WALLET_ADDRESS: 400,
 };
 
 export function chainErrorStatus(err: ChainError): number {
@@ -776,6 +779,33 @@ export async function setCardCast(cardId: number, castUrl: string | null): Promi
   return prisma.card.update({
     where: { id: cardId },
     data: { castUrl },
+  });
+}
+
+/** Kartın NFT'sinin gideceği cüzdanı kaydeder — mint'ten önce gerekli. */
+export async function setCardWallet(cardId: number, walletAddress: string): Promise<Card> {
+  const card = await prisma.card.findUnique({ where: { id: cardId } });
+  if (!card) throw new ChainError("CARD_NOT_FOUND");
+
+  return prisma.card.update({
+    where: { id: cardId },
+    data: { walletAddress },
+  });
+}
+
+/** Mint başarılı olduğunda zincir/tx bilgisini kalıcılaştırır. */
+export async function setCardMinted(
+  cardId: number,
+  data: { nftChain: string; nftTxHash: string }
+): Promise<Card> {
+  const card = await prisma.card.findUnique({ where: { id: cardId } });
+  if (!card) throw new ChainError("CARD_NOT_FOUND");
+  if (card.nftTxHash) throw new ChainError("ALREADY_MINTED");
+  if (!card.walletAddress) throw new ChainError("WALLET_REQUIRED");
+
+  return prisma.card.update({
+    where: { id: cardId },
+    data,
   });
 }
 

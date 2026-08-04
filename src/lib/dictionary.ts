@@ -424,6 +424,22 @@ const dict = {
       errorConnection: "Bağlantı hatası, tekrar dene.",
       errorRateLimited: "Çok fazla istek gönderdin, biraz sonra tekrar dene.",
     },
+
+    mint: {
+      title: "BASE'DE NFT",
+      hint: "Kartını Base ağında bir NFT olarak mint et — gaz ücreti yok, cüzdanını bağlaman yeterli.",
+      connect: "Cüzdan Bağla",
+      connecting: "Bağlanıyor...",
+      switchNetwork: (network: string) => `${network} Ağına Geç`,
+      mintButton: "Base'de Mint Et",
+      minting: "Mint ediliyor...",
+      disconnect: "Cüzdanı Ayır",
+      minted: "✅ Bu kart Base'de bir NFT olarak mint edildi.",
+      viewOnExplorer: "BaseScan'de Aç",
+      errorGeneric: "Mint edilemedi.",
+      errorConnection: "Bağlantı hatası, tekrar dene.",
+      errorNotConfigured: "Mint şu an yapılandırılmamış — daha sonra tekrar dene.",
+    },
   },
 
   en: {
@@ -845,6 +861,22 @@ const dict = {
       errorGeneric: "Couldn't save the cast.",
       errorConnection: "Connection error, please try again.",
       errorRateLimited: "You're sending requests too fast — try again in a bit.",
+    },
+
+    mint: {
+      title: "NFT ON BASE",
+      hint: "Mint your card as an NFT on Base — no gas fee, just connect your wallet.",
+      connect: "Connect Wallet",
+      connecting: "Connecting...",
+      switchNetwork: (network: string) => `Switch to ${network}`,
+      mintButton: "Mint on Base",
+      minting: "Minting...",
+      disconnect: "Disconnect Wallet",
+      minted: "✅ This card has been minted as an NFT on Base.",
+      viewOnExplorer: "View on BaseScan",
+      errorGeneric: "Couldn't mint.",
+      errorConnection: "Connection error, please try again.",
+      errorNotConfigured: "Minting isn't set up yet — try again later.",
     },
   },
 } as const;

@@ -28,6 +28,13 @@ model Card {
   /// Üyenin zincire katıldığını duyurduğu Farcaster cast'i — tweetUrl'ün eşdeğeri.
   castUrl String?
 
+  /// NFT'yi alacak cüzdan adresi — üye bir kez bağlar, mint burada saklanan adrese gider.
+  walletAddress String?
+  /// Mint işleminin yapıldığı ağ — "baseSepolia" | "base". Mint edilmediyse null.
+  nftChain      String?
+  /// Mint transaction hash'i — BaseScan linki buradan kurulur. Token id her zaman Card.id'ye eşittir.
+  nftTxHash     String?
+
   /// Üyenin kendini kısaca tanıttığı metin — paylaşım tweet'ine de girer.
   bio String @default("")
 

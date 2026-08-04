@@ -7,6 +7,7 @@ import { GradedCard } from "@/components/GradedCard";
 import { ChainShareGraphic } from "@/components/ChainShareGraphic";
 import { TweetPanel } from "@/components/TweetPanel";
 import { CastPanel } from "@/components/CastPanel";
+import { MintPanel } from "@/components/MintPanel";
 import { FitToWidth } from "@/components/FitToWidth";
 import { CardData, USERNAME_MAX } from "@/lib/types";
 import { downloadNodeAsImage } from "@/lib/download-image";
@@ -253,6 +254,14 @@ export function CardProfileClient({
           cardId={card.id}
           castUrl={card.castUrl}
           isOwner={isOwner}
+          locale={locale}
+        />
+
+        <MintPanel
+          cardId={card.id}
+          isOwner={isOwner}
+          walletAddress={card.walletAddress}
+          nftTxHash={card.nftTxHash}
           locale={locale}
         />
 

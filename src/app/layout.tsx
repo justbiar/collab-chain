@@ -5,6 +5,7 @@ import { SiteControls } from "@/components/SiteControls";
 import { AuthControl } from "@/components/AuthControl";
 import { SocialLinks } from "@/components/SocialLinks";
 import { FarcasterProvider } from "@/components/FarcasterProvider";
+import { WalletProvider } from "@/components/WalletProvider";
 import { MiniAppReady } from "@/components/MiniAppReady";
 import { getAppUrl } from "@/lib/site-url";
 import "./globals.css";
@@ -89,12 +90,14 @@ export default async function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body className="min-h-full flex flex-col bg-carbon text-bone">
-        <FarcasterProvider>
-          <MiniAppReady />
-          <SiteControls locale={locale} authSlot={<AuthControl />} />
-          {children}
-          <SocialLinks />
-        </FarcasterProvider>
+        <WalletProvider>
+          <FarcasterProvider>
+            <MiniAppReady />
+            <SiteControls locale={locale} authSlot={<AuthControl />} />
+            {children}
+            <SocialLinks />
+          </FarcasterProvider>
+        </WalletProvider>
       </body>
     </html>
   );
