@@ -6,11 +6,14 @@ import Link from "next/link";
 import { GradedCard } from "@/components/GradedCard";
 import { ChainShareGraphic } from "@/components/ChainShareGraphic";
 import { TweetPanel } from "@/components/TweetPanel";
+import { CastPanel } from "@/components/CastPanel";
 import { FitToWidth } from "@/components/FitToWidth";
-import { CardData } from "@/lib/types";
+import { CardData, USERNAME_MAX } from "@/lib/types";
 import { downloadNodeAsImage } from "@/lib/download-image";
 import { buildChainTweetIntent } from "@/lib/twitter-share";
+import { buildChainCastIntent } from "@/lib/farcaster-share";
 import { isInviteExpired, hoursRemaining } from "@/lib/invite";
+import { displayHandle } from "@/lib/handle";
 import { Locale, t } from "@/lib/dictionary";
 import type { Card } from "@/generated/prisma/client";
 
@@ -21,17 +24,21 @@ export function CardProfileClient({
   position,
   locale,
   isOwner,
+  collectionName,
 }: {
   card: Card;
   /** Zincirdeki sıra — kartın üstünde gösterilen numara. */
   position: number;
   locale: Locale;
   isOwner: boolean;
+  /** Kök karttan okunan koleksiyon adı — paylaşım tweet'ine girer. */
+  collectionName: string;
 }) {
   const s = t(locale).profile;
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("card");
   const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [renewTarget, setRenewTarget] = useState("");
   const [isRenewing, setIsRenewing] = useState(false);
@@ -61,6 +68,7 @@ export function CardProfileClient({
     const node = tab === "card" ? cardRef.current : chainRef.current;
     if (!node) return;
     setIsDownloading(true);
+    setDownloadError(null);
     try {
       await downloadNodeAsImage(
         node,
@@ -68,22 +76,30 @@ export function CardProfileClient({
           ? `web3-card-${card.xUsername}.png`
           : `web3-chain-${card.xUsername}.png`
       );
+    } catch {
+      setDownloadError(s.downloadError);
     } finally {
       setIsDownloading(false);
     }
   };
 
+  const shareParts = {
+    collectionName,
+    isFounder: card.parentId == null,
+    targetUsername: card.targetUsername ?? "",
+    bio: card.bio,
+    targetReason: card.targetReason,
+  };
+
   const handleShare = () => {
     const inviteUrl = `${window.location.origin}/invite/${card.id}`;
-    const url = buildChainTweetIntent(
-      {
-        targetUsername: card.targetUsername ?? "",
-        bio: card.bio,
-        targetReason: card.targetReason,
-      },
-      inviteUrl,
-      locale
-    );
+    const url = buildChainTweetIntent(shareParts, inviteUrl, locale);
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
+  const handleShareFarcaster = () => {
+    const inviteUrl = `${window.location.origin}/invite/${card.id}`;
+    const url = buildChainCastIntent(shareParts, inviteUrl, locale);
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
@@ -109,7 +125,9 @@ export function CardProfileClient({
       });
       const json = await res.json();
       if (!res.ok) {
-        setRenewError(json.error ?? s.renewErrorGeneric);
+        setRenewError(
+          json.error === "RATE_LIMITED" ? s.renewErrorRateLimited : (json.error ?? s.renewErrorGeneric)
+        );
         return;
       }
       setRenewTarget("");
@@ -136,8 +154,8 @@ export function CardProfileClient({
         </p>
 
         <p className="mt-2 text-[15px] text-smoke">
-          <Link href={`/u/${card.xUsername}`} className="font-mono underline-offset-4 hover:text-bone hover:underline">
-            @{card.xUsername}
+          <Link href={`/u/${encodeURIComponent(card.xUsername)}`} className="font-mono underline-offset-4 hover:text-bone hover:underline">
+            @{displayHandle(card.xUsername)}
           </Link>
           {card.role && ` · ${card.role}`}
         </p>
@@ -213,11 +231,27 @@ export function CardProfileClient({
               {s.shareOnX}
             </button>
           )}
+          {hasTarget && card.inviteStatus === "pending" && !expired && (
+            <button
+              onClick={handleShareFarcaster}
+              className="btn-metallic-ghost flex-1 rounded-full px-5 py-3 text-[15px] tracking-[-0.01em]"
+            >
+              {s.shareOnFarcaster}
+            </button>
+          )}
         </div>
+        {downloadError && <p className="text-sm text-red-400">{downloadError}</p>}
 
         <TweetPanel
           cardId={card.id}
           tweetUrl={card.tweetUrl}
+          isOwner={isOwner}
+          locale={locale}
+        />
+
+        <CastPanel
+          cardId={card.id}
+          castUrl={card.castUrl}
           isOwner={isOwner}
           locale={locale}
         />
@@ -227,10 +261,10 @@ export function CardProfileClient({
           <div className="metallic-panel flex w-full max-w-md flex-col items-center gap-3 rounded-[22px] p-5 text-center">
             <p className="text-xs text-smoke">
               {card.inviteStatus === "accepted"
-                ? s.accepted(card.targetUsername ?? "")
+                ? s.accepted(displayHandle(card.targetUsername ?? ""))
                 : expired
-                  ? s.expired(card.targetUsername ?? "")
-                  : s.pending(card.targetUsername ?? "", remainingHours)}
+                  ? s.expired(displayHandle(card.targetUsername ?? ""))
+                  : s.pending(displayHandle(card.targetUsername ?? ""), remainingHours)}
             </p>
 
             {card.targetReason && (
@@ -256,6 +290,7 @@ export function CardProfileClient({
                     value={renewTarget}
                     onChange={(e) => setRenewTarget(e.target.value)}
                     placeholder={s.renewPlaceholder}
+                    maxLength={USERNAME_MAX}
                     className="w-full rounded-full border border-bone/10 bg-bone/5 px-4 py-2 text-sm text-bone placeholder:text-iron/60 outline-none focus:border-bone/40"
                   />
                   <button

@@ -1,0 +1,35 @@
+{
+  "accountAssociation": {
+    "header": "eyJmaWQiOjEzMjgwNjUsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHhjMWU5OGFiQjliNzg2ZEVmQjg0RkJkNTRlQzI2MTRBQTJFMTAwNTFDIn0",
+    "payload": "eyJkb21haW4iOiJ3d3cuY29sbGFiY2hhaW4uc3R1ZGlvIn0",
+    "signature": "ApgRqZ23+T+5NmAvaQSGf52InVh+WYhzSaL/vDAS5gIfAv9oIjb9yUsRY0RL+uajHTZNDX8bJCqsq0BS/IUHuBw="
+  },
+  "miniapp": {
+    "version": "1",
+    "name": "Collab Chain",
+    "iconUrl": "https://www.collabchain.studio/icon-512.png",
+    "homeUrl": "https://www.collabchain.studio",
+    "imageUrl": "https://www.collabchain.studio/logo.png",
+    "buttonTitle": "Zinciri Aç",
+    "splashImageUrl": "https://www.collabchain.studio/icon-512.png",
+    "splashBackgroundColor": "#08080a",
+    "subtitle": "Zincire katıl, kartını oluştur",
+    "description": "Birinin seni etiketlediği davet linkiyle zincire katıl, kartını oluştur ve paylaş.",
+    "primaryCategory": "social",
+    "tags": ["chain", "invite", "cards", "social"],
+    "tagline": "Zincire katıl, kartını oluştur.",
+    "ogTitle": "Collab Chain",
+    "ogDescription": "Zincire katıl, kartını oluştur, paylaş.",
+    "ogImageUrl": "https://www.collabchain.studio/logo.png"
+  },
+  "frame": {
+    "version": "1",
+    "name": "Collab Chain",
+    "iconUrl": "https://www.collabchain.studio/icon-512.png",
+    "homeUrl": "https://www.collabchain.studio",
+    "imageUrl": "https://www.collabchain.studio/logo.png",
+    "buttonTitle": "Zinciri Aç",
+    "splashImageUrl": "https://www.collabchain.studio/icon-512.png",
+    "splashBackgroundColor": "#08080a"
+  }
+}

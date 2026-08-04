@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { INVITE_EXPIRY_HOURS, TURN_EXPIRY_HOURS } from "@/lib/chain";
 import { getLocale, t } from "@/lib/i18n";
+import { TweetEmbed } from "@/components/TweetEmbed";
+
+const EXAMPLE_TWEET_URL = "https://x.com/justbiar/status/2083919544498737327";
 
 export const dynamic = "force-dynamic";
 
@@ -81,6 +84,17 @@ export default async function RulesPage() {
             </li>
           ))}
         </ol>
+
+        {/* Gerçek örnek tweet */}
+        <div className="mt-16">
+          <p className="text-center font-mono text-[11px] tracking-[0.3em] text-smoke">
+            {s.exampleTweetTitle}
+          </p>
+          <p className="mx-auto mt-3 mb-7 max-w-lg text-center text-[14px] leading-relaxed text-ash">
+            {s.exampleTweetLead}
+          </p>
+          <TweetEmbed url={EXAMPLE_TWEET_URL} />
+        </div>
 
         {/* Tweet iliştirme */}
         <div className="metallic-panel mt-16 rounded-[22px] p-7 text-center">

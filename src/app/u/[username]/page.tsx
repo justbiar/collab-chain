@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getProfileByUsername } from "@/lib/chain";
 import { getLocale, t } from "@/lib/i18n";
+import { displayHandle } from "@/lib/handle";
 import { Avatar } from "@/components/Avatar";
 import { GoldenChain } from "@/components/GoldenChain";
 
@@ -58,7 +59,7 @@ export default async function ProfilePage({ params }: PageProps) {
           {profile.displayName}
         </h1>
         <p className="mt-2 font-mono text-[13px] text-smoke">
-          @{profile.username}
+          @{displayHandle(profile.username)}
           {profile.role && <span className="text-ash"> · {profile.role}</span>}
         </p>
 

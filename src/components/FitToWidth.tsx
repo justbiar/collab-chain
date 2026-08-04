@@ -55,7 +55,12 @@ export function FitToWidth({ designWidth, children }: FitToWidthProps) {
   return (
     <div
       ref={outer}
-      className="flex w-full justify-center"
+      // items-start şart: aksi halde flex varsayılanı (stretch) inner'ı
+      // outer'ın kendi height'ına sıkıştırır. Sonraki ölçüm bu sıkışmış
+      // değeri "doğal" yükseklik sanıp tekrar küçültür — her render'da
+      // biraz daha çöken bir geri besleme döngüsü oluşur ve kutu birkaç
+      // piksele kadar iner (altındaki içerik üstüne biner).
+      className="flex w-full items-start justify-center"
       // Küçülen içerik kadar yer kaplasın; aksi halde altında boşluk kalırdı.
       style={height != null ? { height } : undefined}
     >

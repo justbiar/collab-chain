@@ -11,15 +11,21 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@farcaster/auth-client": "^0.7.1",
+    "@farcaster/auth-kit": "^0.8.2",
+    "@farcaster/miniapp-sdk": "^0.3.0",
     "@prisma/adapter-pg": "^7.9.0",
     "@prisma/client": "^7.9.0",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.38.1",
     "html-to-image": "^1.11.13",
     "next": "16.2.11",
     "next-auth": "^5.0.0-beta.32",
     "pg": "^8.22.0",
     "prisma": "^7.9.0",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "viem": "^2.55.10"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

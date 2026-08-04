@@ -3,6 +3,7 @@
 import { forwardRef, useState, useRef, MouseEvent } from "react";
 import { CardData, parseSkills } from "@/lib/types";
 import { generateBarcodeWidths, generatePlayerId } from "@/lib/twitter-share";
+import { displayHandle } from "@/lib/handle";
 import { Locale, t } from "@/lib/dictionary";
 import { LogoPattern } from "./LogoPattern";
 import { Avatar } from "./Avatar";
@@ -26,7 +27,7 @@ export const GradedCard = forwardRef<HTMLDivElement, GradedCardProps>(
     const s = t(locale).card;
     const { firstName, lastName, xUsername, role, skills, profileImageUrl } = data;
     const fullName = `${firstName} ${lastName}`.trim() || s.unnamed;
-    const handle = xUsername.replace(/^@/, "") || "username";
+    const handle = displayHandle(xUsername.replace(/^@/, "")) || "username";
     const barcodeSeed = handle || "web3card";
     const barcodeWidths = generateBarcodeWidths(barcodeSeed);
     const playerId = generatePlayerId(barcodeSeed);
@@ -34,6 +35,8 @@ export const GradedCard = forwardRef<HTMLDivElement, GradedCardProps>(
 
     const [tiltStyle, setTiltStyle] = useState<React.CSSProperties>(RESTING_STYLE);
     const containerRef = useRef<HTMLDivElement | null>(null);
+    const [flipped, setFlipped] = useState(false);
+    const hasBio = data.bio.trim().length > 0;
 
     const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
       const cardNode = containerRef.current;
@@ -61,12 +64,17 @@ export const GradedCard = forwardRef<HTMLDivElement, GradedCardProps>(
 
     const handleMouseLeave = () => setTiltStyle(RESTING_STYLE);
 
+    const handleFlip = () => {
+      if (hasBio) setFlipped((f) => !f);
+    };
+
     return (
       <div ref={ref} className="card-3d-wrapper relative w-[400px]">
         <div
           ref={containerRef}
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
+          onClick={handleFlip}
           style={tiltStyle}
           className="card-plastic relative cursor-pointer overflow-hidden rounded-[20px] p-3 shadow-[0_30px_70px_-24px_rgba(0,0,0,0.9)]"
         >
@@ -83,9 +91,21 @@ export const GradedCard = forwardRef<HTMLDivElement, GradedCardProps>(
             className="pointer-events-none absolute -right-10 -top-16 h-28 w-40 rotate-[15deg] bg-white/6 blur-2xl"
           />
 
-          {/* Inner bezel — the recessed well the card sits in */}
-          <div className="relative rounded-[14px] border border-white/8 bg-black/25 p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.07),inset_0_-1px_0_rgba(0,0,0,0.5)]">
-            {/* Grading label */}
+          {/* Inner bezel — the recessed well the card sits in; kısa bio doluysa
+              tıklanınca 3B çevrilip arka yüzde tam metin gösterilir. */}
+          <div
+            className="relative rounded-[14px] border border-white/8 bg-black/25 p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.07),inset_0_-1px_0_rgba(0,0,0,0.5)]"
+            style={{ perspective: "1600px" }}
+          >
+            <div
+              className="relative transition-transform duration-700 ease-[cubic-bezier(0.4,0.2,0.2,1)]"
+              style={{
+                transformStyle: "preserve-3d",
+                transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
+              }}
+            >
+              <div style={{ backfaceVisibility: "hidden", visibility: flipped ? "hidden" : "visible" }}>
+              {/* Grading label */}
             <div className="relative mb-2.5 overflow-hidden rounded-[9px] bg-[#f4f5f7] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.6)]">
               <div className="card-holo-strip h-[3px] w-full" />
               <div className="flex items-start justify-between px-3 py-2">
@@ -185,6 +205,28 @@ export const GradedCard = forwardRef<HTMLDivElement, GradedCardProps>(
                   </span>
                 </div>
               </div>
+            </div>
+              </div>
+
+              {/* BACK: bio — sadece çevriliyken DOM'da tutulur. html-to-image
+                  (PNG indirme) backface-visibility'yi doğru yorumlamıyor;
+                  arka yüz sürekli DOM'da kalsaydı ön yüzün üstüne aynalanmış
+                  şekilde biniyor ve indirilen görüntü bozuk çıkıyordu. */}
+              {hasBio && flipped && (
+                <div
+                  className="card-nebula absolute inset-0 flex flex-col items-center justify-center overflow-hidden rounded-[9px] border border-white/12 p-6 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]"
+                  style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+                >
+                  <div aria-hidden className="card-stars pointer-events-none absolute inset-0 opacity-40" />
+                  <p className="relative z-10 font-mono text-[9px] tracking-[0.25em] text-[#c9b8e8]">
+                    {s.aboutLabel}
+                  </p>
+                  <p className="relative z-10 mt-4 overflow-y-auto text-[15px] leading-relaxed text-white/90">
+                    {data.bio}
+                  </p>
+                  <p className="relative z-10 mt-5 font-mono text-[11px] text-white/40">@{handle}</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

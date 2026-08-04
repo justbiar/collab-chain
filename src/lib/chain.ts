@@ -1,5 +1,14 @@
 import { prisma } from "@/lib/prisma";
-import { CardData } from "@/lib/types";
+import {
+  CardData,
+  FIRST_NAME_MAX,
+  LAST_NAME_MAX,
+  ROLE_MAX,
+  SKILLS_MAX,
+  USERNAME_MAX,
+} from "@/lib/types";
+import { isValidImageValue } from "@/lib/image";
+import { isSuperAdmin } from "@/lib/admin";
 import {
   isInviteExpired,
   expiryDate,
@@ -48,6 +57,9 @@ const CHAIN_ERROR_STATUS: Record<string, number> = {
   NOT_COLLECTION_ADMIN: 403,
   MEMBER_NOT_FOUND: 404,
   CANNOT_REMOVE_FOUNDER: 409,
+  INVALID_IMAGE: 400,
+  ALREADY_MEMBER: 409,
+  USERNAME_REQUIRED: 400,
 };
 
 export function chainErrorStatus(err: ChainError): number {
@@ -56,6 +68,15 @@ export function chainErrorStatus(err: ChainError): number {
 
 function normalizeHandle(username: string): string {
   return username.replace(/^@/, "").trim();
+}
+
+/**
+ * Client'taki `maxLength` yalnızca UI kolaylığı — API doğrudan çağrılırsa
+ * atlanabilir. Sınırsız metinlerin DB'ye yazılmasını engellemek için
+ * serbest metin alanları burada da kırpılır.
+ */
+function clampText(value: string, max: number): string {
+  return value.length > max ? value.slice(0, max) : value;
 }
 
 /* ------------------------------------------------------------------ *
@@ -147,6 +168,79 @@ export async function isUsernameBanned(username: string): Promise<boolean> {
 }
 
 /* ------------------------------------------------------------------ *
+ * Join requests
+ *
+ * Bir koleksiyona etiketlenmeden katılmak isteyenlerin listesi. Sırası
+ * gelen üye, kart oluştururken ya da daveti yenilerken bu listeden seçip
+ * doğrudan etiketleyebilir. Biri gerçekten katıldığında (bir kart onun
+ * adına oluşturulduğunda) isteği otomatik olarak temizlenir.
+ * ------------------------------------------------------------------ */
+
+export interface JoinRequestSummary {
+  xUsername: string;
+  createdAt: Date;
+}
+
+/** Bir X hesabının bu koleksiyona katılma isteği göndermesi. */
+export async function requestToJoin(collectionId: number, username: string): Promise<void> {
+  const handle = normalizeHandle(username);
+  if (!handle) throw new ChainError("USERNAME_REQUIRED");
+
+  const found = await prisma.card.findUnique({ where: { id: collectionId } });
+  if (!found) throw new ChainError("CARD_NOT_FOUND");
+  const root = await findRoot(found);
+
+  if (await isUsernameBanned(handle)) throw new ChainError("USER_BANNED");
+
+  const path = (await getChainByRootId(root.id)) ?? [];
+  if (path.some((c) => c.xUsername.toLowerCase() === handle.toLowerCase())) {
+    throw new ChainError("ALREADY_MEMBER");
+  }
+
+  const syncedRoot = await syncAutoCompletion(root, path.length);
+  if (!acceptsNewMembers(syncedRoot, path.length)) {
+    throw new ChainError(
+      collectionPhase(syncedRoot, path.length) === "upcoming"
+        ? "COLLECTION_NOT_STARTED"
+        : "COLLECTION_CLOSED"
+    );
+  }
+
+  await prisma.joinRequest.upsert({
+    where: { collectionId_xUsername: { collectionId: root.id, xUsername: handle } },
+    update: {},
+    create: { collectionId: root.id, xUsername: handle },
+  });
+}
+
+/** Kendi katılma isteğini geri çeker. */
+export async function cancelJoinRequest(collectionId: number, username: string): Promise<void> {
+  const handle = normalizeHandle(username);
+  if (!handle) return;
+  await prisma.joinRequest.deleteMany({
+    where: { collectionId, xUsername: { equals: handle, mode: "insensitive" } },
+  });
+}
+
+/** Bekleyen istekler — en eskiden yeniye. */
+export async function listJoinRequests(collectionId: number): Promise<JoinRequestSummary[]> {
+  const requests = await prisma.joinRequest.findMany({
+    where: { collectionId },
+    orderBy: { createdAt: "asc" },
+  });
+  return requests.map((r) => ({ xUsername: r.xUsername, createdAt: r.createdAt }));
+}
+
+export async function hasJoinRequest(collectionId: number, username: string): Promise<boolean> {
+  const handle = normalizeHandle(username);
+  if (!handle) return false;
+  const hit = await prisma.joinRequest.findFirst({
+    where: { collectionId, xUsername: { equals: handle, mode: "insensitive" } },
+  });
+  return hit !== null;
+}
+
+/* ------------------------------------------------------------------ *
  * Reads
  * ------------------------------------------------------------------ */
 
@@ -165,7 +259,7 @@ async function activeChildOf(cardId: number): Promise<Card | null> {
   });
 }
 
-async function findRoot(card: Card): Promise<Card> {
+export async function findRoot(card: Card): Promise<Card> {
   let root = card;
   while (root.parentId != null) {
     const parent: Card | null = await prisma.card.findUnique({
@@ -404,13 +498,19 @@ export function collectionTitle(root: Card): string {
   return `${root.firstName} ${root.lastName}`.trim() || root.xUsername;
 }
 
-/** Yönetici işlemleri için kök kartı bulur ve yetkiyi doğrular. */
+/**
+ * Yönetici işlemleri için kök kartı bulur ve yetkiyi doğrular.
+ * Koleksiyonun kurucusu ya da süper admin — süper admin her koleksiyonu
+ * moderasyon amacıyla düzenleyebilir.
+ */
 async function requireAdminRoot(collectionId: number, username: string): Promise<Card> {
   const found = await prisma.card.findUnique({ where: { id: collectionId } });
   if (!found) throw new ChainError("CARD_NOT_FOUND");
 
   const root = await findRoot(found);
-  if (!isCollectionAdmin(root, username)) throw new ChainError("NOT_COLLECTION_ADMIN");
+  if (!isCollectionAdmin(root, username) && !isSuperAdmin(username)) {
+    throw new ChainError("NOT_COLLECTION_ADMIN");
+  }
   return root;
 }
 
@@ -453,6 +553,7 @@ export async function deleteCollection(collectionId: number, username: string): 
 
   await prisma.$transaction(async (tx) => {
     await tx.bannedUser.deleteMany({ where: { cardId: { in: all.map((c) => c.id) } } });
+    await tx.joinRequest.deleteMany({ where: { collectionId: root.id } });
     // Ebeveyn referansları kırılmasın diye derinden yüzeye doğru sil.
     for (const card of [...all].reverse()) {
       await tx.card.delete({ where: { id: card.id } });
@@ -533,8 +634,21 @@ export async function createCard(input: CreateCardInput): Promise<Card> {
     throw new ChainError("USER_BANNED");
   }
 
+  // Görsel alanları sınırsız string olarak DB'ye yazılabilir olmasın diye
+  // burada doğrulanır — client'ın gönderdiği herhangi bir string değil,
+  // yalnızca izin verilen tipte ve boyutta bir data URL kabul edilir.
+  if (
+    !isValidImageValue(data.profileImageUrl) ||
+    !isValidImageValue(data.logoImageUrl) ||
+    (parentId == null && !isValidImageValue(collection?.coverImageUrl))
+  ) {
+    throw new ChainError("INVALID_IMAGE");
+  }
+
   /** Yerine yeni kişi alındığı için elenecek üyeler. */
   let toEliminate: Card[] = [];
+  /** Katılınca kendi katılma isteği temizlenecek koleksiyonun kök id'si. */
+  let collectionRootId: number | null = null;
 
   if (parentId != null) {
     const parent = await prisma.card.findUnique({ where: { id: parentId } });
@@ -576,20 +690,23 @@ export async function createCard(input: CreateCardInput): Promise<Card> {
 
     // Sıra geriye düştüyse, aradaki gecikenler bu kabulle birlikte yanar.
     toEliminate = state.lapsed;
+    collectionRootId = root.id;
   }
 
-  const targetUsername = data.targetUsername ? normalizeHandle(data.targetUsername) : null;
+  const targetUsername = data.targetUsername
+    ? clampText(normalizeHandle(data.targetUsername), USERNAME_MAX)
+    : null;
 
   return prisma.$transaction(async (tx) => {
     await eliminate(tx, toEliminate);
 
     const card = await tx.card.create({
       data: {
-        firstName: data.firstName,
-        lastName: data.lastName,
+        firstName: clampText(data.firstName, FIRST_NAME_MAX),
+        lastName: clampText(data.lastName, LAST_NAME_MAX),
         xUsername: submittedHandle,
-        role: data.role,
-        skills: data.skills,
+        role: clampText(data.role, ROLE_MAX),
+        skills: clampText(data.skills, SKILLS_MAX),
         bio: data.bio ?? "",
         profileImageUrl: data.profileImageUrl || null,
         logoImageUrl: data.logoImageUrl || null,
@@ -622,6 +739,15 @@ export async function createCard(input: CreateCardInput): Promise<Card> {
         where: { id: parentId },
         data: { inviteStatus: "accepted", turnExpiresAt: null },
       });
+
+      // Katılan kişinin bu koleksiyon için bekleyen bir isteği varsa artık
+      // gereksiz — davetle mi yoksa listeden seçilerek mi katıldığı fark
+      // etmeden temizlenir.
+      if (collectionRootId != null) {
+        await tx.joinRequest.deleteMany({
+          where: { collectionId: collectionRootId, xUsername: { equals: submittedHandle, mode: "insensitive" } },
+        });
+      }
     }
 
     return card;
@@ -642,8 +768,19 @@ export async function setCardTweet(cardId: number, tweetUrl: string | null): Pro
   });
 }
 
+/** `setCardTweet`'in Farcaster eşdeğeri — duyuru cast'ini iliştirir. */
+export async function setCardCast(cardId: number, castUrl: string | null): Promise<Card> {
+  const card = await prisma.card.findUnique({ where: { id: cardId } });
+  if (!card) throw new ChainError("CARD_NOT_FOUND");
+
+  return prisma.card.update({
+    where: { id: cardId },
+    data: { castUrl },
+  });
+}
+
 export async function renewInvite(cardId: number, newTargetUsername: string): Promise<Card> {
-  const handle = normalizeHandle(newTargetUsername);
+  const handle = clampText(normalizeHandle(newTargetUsername), USERNAME_MAX);
   if (!handle) throw new ChainError("TARGET_REQUIRED");
 
   const card = await prisma.card.findUnique({ where: { id: cardId } });

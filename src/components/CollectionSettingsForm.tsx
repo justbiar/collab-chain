@@ -1,8 +1,9 @@
 "use client";
 
-import { ChangeEvent } from "react";
+import { ChangeEvent, useState } from "react";
 import { CollectionFormData } from "@/lib/types";
 import { readFileAsDataUrl } from "@/lib/download-image";
+import { isAllowedImageFile } from "@/lib/image";
 import { Locale, t } from "@/lib/dictionary";
 
 interface Props {
@@ -17,6 +18,7 @@ const inputClass =
 /** Sadece yeni koleksiyon açılırken (davetsiz akışta) gösterilir. */
 export function CollectionSettingsForm({ value, onChange, locale }: Props) {
   const s = t(locale).collection;
+  const [imageError, setImageError] = useState<string | null>(null);
   const update = (patch: Partial<CollectionFormData>) => onChange({ ...value, ...patch });
 
   const modes = [
@@ -28,6 +30,12 @@ export function CollectionSettingsForm({ value, onChange, locale }: Props) {
   const handleCover = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (!isAllowedImageFile(file)) {
+      setImageError(s.imageInvalid);
+      e.target.value = "";
+      return;
+    }
+    setImageError(null);
     update({ coverImageUrl: await readFileAsDataUrl(file) });
   };
 
@@ -85,6 +93,7 @@ export function CollectionSettingsForm({ value, onChange, locale }: Props) {
           />
         </div>
         <p className="mt-1.5 text-[11px] text-iron">{s.coverHint}</p>
+        {imageError && <p className="mt-1 text-[11px] text-red-400">{imageError}</p>}
       </div>
 
       <div className="border-t border-bone/10 pt-4">

@@ -1,9 +1,13 @@
 import Link from "next/link";
-import { getAllCollections, INVITE_EXPIRY_HOURS } from "@/lib/chain";
+import { collectionTitle, getAllCollections, INVITE_EXPIRY_HOURS } from "@/lib/chain";
 import type { CollectionPhase } from "@/lib/collection";
 import { getLocale, t } from "@/lib/i18n";
+import { auth } from "@/auth";
+import { isSuperAdmin } from "@/lib/admin";
+import { listGenesisGrants } from "@/lib/genesis";
 import { AvatarMarquee } from "@/components/AvatarMarquee";
 import { CollectionCard } from "@/components/CollectionCard";
+import { AdminPanel } from "@/components/AdminPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -15,12 +19,16 @@ interface PageProps {
 }
 
 export default async function Home({ searchParams }: PageProps) {
-  const [{ filter: rawFilter }, collections, locale] = await Promise.all([
+  const [{ filter: rawFilter }, collections, locale, session] = await Promise.all([
     searchParams,
     getAllCollections(),
     getLocale(),
+    auth(),
   ]);
   const s = t(locale);
+
+  const isSuper = isSuperAdmin(session?.user?.username);
+  const grants = isSuper ? await listGenesisGrants() : [];
 
   const filter: Filter = FILTERS.includes(rawFilter as Filter)
     ? (rawFilter as Filter)
@@ -118,6 +126,22 @@ export default async function Home({ searchParams }: PageProps) {
           </div>
         </div>
       </header>
+
+      {isSuper && (
+        <AdminPanel
+          grants={grants.map((g) => ({
+            xUsername: g.xUsername,
+            grantedAt: g.grantedAt.toISOString(),
+          }))}
+          collections={collections.map(({ root, phase }) => ({
+            id: root.id,
+            title: collectionTitle(root),
+            xUsername: root.xUsername,
+            phase,
+          }))}
+          locale={locale}
+        />
+      )}
 
       <AvatarMarquee cards={allCards} />
 

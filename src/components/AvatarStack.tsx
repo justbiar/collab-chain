@@ -1,4 +1,5 @@
 import type { Card } from "@/generated/prisma/client";
+import { displayHandle } from "@/lib/handle";
 import { Avatar } from "./Avatar";
 
 interface AvatarStackProps {
@@ -23,7 +24,7 @@ export function AvatarStack({ members, max = 3 }: AvatarStackProps) {
       {shown.map((member, i) => (
         <div
           key={member.id}
-          title={`@${member.xUsername}`}
+          title={`@${displayHandle(member.xUsername)}`}
           className={`relative h-12 w-12 shrink-0 overflow-hidden rounded-full border border-[rgba(var(--edge-rgb),0.25)] bg-carbon p-0.5 ${
             i > 0 ? "-ml-3.5" : ""
           }`}

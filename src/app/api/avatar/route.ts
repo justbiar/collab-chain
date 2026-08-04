@@ -1,15 +1,20 @@
 import { NextRequest } from "next/server";
+import { enforceAvatarRateLimit } from "@/lib/rate-limit";
 
 export async function GET(req: NextRequest) {
+  const rateLimited = await enforceAvatarRateLimit(req);
+  if (rateLimited) return rateLimited;
+
   const username = req.nextUrl.searchParams.get("u")?.replace(/^@/, "").trim();
   if (!username) {
     return new Response(null, { status: 400 });
   }
+  const platform = req.nextUrl.searchParams.get("p") === "farcaster" ? "farcaster" : "twitter";
 
   let upstream: Response;
   try {
     upstream = await fetch(
-      `https://unavatar.io/twitter/${encodeURIComponent(username)}`,
+      `https://unavatar.io/${platform}/${encodeURIComponent(username)}`,
       { next: { revalidate: 3600 } }
     );
   } catch {

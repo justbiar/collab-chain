@@ -1,15 +1,20 @@
 import Link from "next/link";
 import {
+  findRoot,
   getCardById,
   getCardPosition,
   isInviteExpired,
   isUsernameBanned,
+  listJoinRequests,
   INVITE_EXPIRY_HOURS,
 } from "@/lib/chain";
 import { auth, signIn, signOut } from "@/auth";
 import { getLocale, t } from "@/lib/i18n";
-import { adminHandle, isAdminHandle } from "@/lib/admin";
+import { adminHandle } from "@/lib/admin";
+import { canStartGenesis } from "@/lib/genesis";
 import { GateScreen } from "@/components/GateScreen";
+import { FarcasterSignInButton } from "@/components/FarcasterSignInButton";
+import { displayHandle } from "@/lib/handle";
 import { CreateClient } from "./CreateClient";
 
 export const dynamic = "force-dynamic";
@@ -47,7 +52,7 @@ export default async function CreatePage({ searchParams }: PageProps) {
     const adminUsername = adminHandle();
     const session = await auth();
 
-    if (!isAdminHandle(session?.user?.username)) {
+    if (!(await canStartGenesis(session?.user?.username))) {
       return (
         <GateScreen>
           <p className="text-lg font-[500] text-bone">
@@ -77,6 +82,7 @@ export default async function CreatePage({ searchParams }: PageProps) {
                 {s.signInWithX}
               </button>
             </form>
+            <FarcasterSignInButton callbackUrl="/create" />
           </div>
 
           <Link href="/" className="text-xs text-smoke underline">
@@ -96,7 +102,7 @@ export default async function CreatePage({ searchParams }: PageProps) {
       return (
         <GateScreen>
           <p className="text-lg font-[500] text-bone">
-            {s.authRequiredTitle(parentCard.targetUsername ?? "")}
+            {s.authRequiredTitle(displayHandle(parentCard.targetUsername ?? ""))}
           </p>
           <p className="max-w-sm text-sm text-smoke">
             {s.authRequiredBody(parentCard.firstName, parentCard.lastName)}
@@ -116,6 +122,7 @@ export default async function CreatePage({ searchParams }: PageProps) {
               {s.signInWithX}
             </button>
           </form>
+          <FarcasterSignInButton callbackUrl={`/create?invite=${parentId}`} />
           <Link href="/" className="text-xs text-smoke underline">
             {s.backHome}
           </Link>
@@ -144,8 +151,8 @@ export default async function CreatePage({ searchParams }: PageProps) {
           <p className="text-lg font-[500] text-bone">{s.notYoursTitle}</p>
           <p className="max-w-sm text-sm text-smoke">
             {s.notYoursBody(
-              parentCard.targetUsername ?? "",
-              session.user.username ?? s.unknownUser
+              displayHandle(parentCard.targetUsername ?? ""),
+              displayHandle(session.user.username ?? s.unknownUser)
             )}
           </p>
           <form
@@ -173,6 +180,19 @@ export default async function CreatePage({ searchParams }: PageProps) {
   const activeParent = inviteError ? null : parentCard;
   const nextPosition = activeParent ? (await getCardPosition(activeParent)) + 1 : 1;
 
+  // Bu noktaya kadar gelindiyse (genesis ya da davet kabul akışı) oturum
+  // zaten doğrulanmış ve kullanıcı adı sabitlenmiştir. Kart formunda kullanıcı
+  // adı hep buradan gelir — kimse başkasının X adını yazamaz.
+  const session = await auth();
+  const sessionUsername = session?.user?.username ?? "";
+
+  // Bu koleksiyona katılmak isteyenlerin listesi — sırası gelen kişi birini
+  // etiketlemek yerine buradan seçebilir. Yeni (genesis) koleksiyonda henüz
+  // kimse katılmak isteyemez, o yüzden liste boştur.
+  const joinRequests = activeParent
+    ? await listJoinRequests((await findRoot(activeParent)).id)
+    : [];
+
   return (
     <CreateClient
       parentId={inviteError ? null : parentId}
@@ -181,6 +201,8 @@ export default async function CreatePage({ searchParams }: PageProps) {
       inviteExpiryHours={INVITE_EXPIRY_HOURS}
       nextPosition={nextPosition}
       locale={locale}
+      sessionUsername={sessionUsername}
+      joinRequests={joinRequests.map((r) => r.xUsername)}
     />
   );
 }

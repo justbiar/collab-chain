@@ -8,6 +8,7 @@ import {
   ChainError,
   chainErrorStatus,
 } from "@/lib/chain";
+import { enforceWriteRateLimit } from "@/lib/rate-limit";
 
 type AdminAction = "complete" | "cancel" | "remove";
 
@@ -45,6 +46,9 @@ export async function PATCH(
   const { handle, error } = await requireSession();
   if (error) return error;
 
+  const rateLimited = await enforceWriteRateLimit(req, handle);
+  if (rateLimited) return rateLimited;
+
   const body = (await req.json()) as Body;
 
   try {
@@ -76,7 +80,7 @@ export async function PATCH(
 
 /** Koleksiyonu ve tüm kartlarını kalıcı olarak siler. Sadece yönetici. */
 export async function DELETE(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
@@ -87,6 +91,9 @@ export async function DELETE(
 
   const { handle, error } = await requireSession();
   if (error) return error;
+
+  const rateLimited = await enforceWriteRateLimit(req, handle);
+  if (rateLimited) return rateLimited;
 
   try {
     return NextResponse.json({ deleted: await deleteCollection(collectionId, handle) });

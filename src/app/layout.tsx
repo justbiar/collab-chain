@@ -4,6 +4,9 @@ import { getLocale, t } from "@/lib/i18n";
 import { SiteControls } from "@/components/SiteControls";
 import { AuthControl } from "@/components/AuthControl";
 import { SocialLinks } from "@/components/SocialLinks";
+import { FarcasterProvider } from "@/components/FarcasterProvider";
+import { MiniAppReady } from "@/components/MiniAppReady";
+import { getAppUrl } from "@/lib/site-url";
 import "./globals.css";
 
 const inter = Inter({
@@ -11,9 +14,34 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
+/**
+ * Warpcast/Base App feed'inde linkin etkileşimli bir "Mini App aç" kartı
+ * olarak unfurl olması için gereken embed meta etiketi. `fc:miniapp` güncel
+ * isim, `fc:frame` eski istemcilerle geriye dönük uyumluluk için aynı içerikle
+ * tekrarlanıyor (bkz. @farcaster/miniapp-core embeds şeması).
+ */
+function miniAppEmbed(appUrl: string) {
+  return JSON.stringify({
+    version: "1",
+    imageUrl: `${appUrl}/logo.png`,
+    button: {
+      title: "Zinciri Aç",
+      action: {
+        type: "launch_miniapp",
+        name: "Collab Chain",
+        url: appUrl,
+        splashImageUrl: `${appUrl}/icon-512.png`,
+        splashBackgroundColor: "#08080a",
+      },
+    },
+  });
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
   const s = t(locale);
+  const appUrl = getAppUrl();
+  const embed = miniAppEmbed(appUrl);
   return {
     title: s.siteName,
     description: s.siteTagline,
@@ -24,6 +52,10 @@ export async function generateMetadata(): Promise<Metadata> {
         { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
       ],
       apple: "/apple-touch-icon.png",
+    },
+    other: {
+      "fc:miniapp": embed,
+      "fc:frame": embed,
     },
   };
 }
@@ -57,9 +89,12 @@ export default async function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body className="min-h-full flex flex-col bg-carbon text-bone">
-        <SiteControls locale={locale} authSlot={<AuthControl />} />
-        {children}
-        <SocialLinks />
+        <FarcasterProvider>
+          <MiniAppReady />
+          <SiteControls locale={locale} authSlot={<AuthControl />} />
+          {children}
+          <SocialLinks />
+        </FarcasterProvider>
       </body>
     </html>
   );

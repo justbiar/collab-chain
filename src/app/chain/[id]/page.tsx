@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import {
   collectionTitle,
   getChainView,
+  hasJoinRequest,
   hoursUntil,
   msUntil,
   INVITE_EXPIRY_HOURS,
@@ -11,9 +12,12 @@ import {
 import { collectionProgress, isCollectionAdmin } from "@/lib/collection";
 import { getLocale, t } from "@/lib/i18n";
 import { auth } from "@/auth";
+import { isSuperAdmin } from "@/lib/admin";
+import { displayHandle } from "@/lib/handle";
 import { ChainRow } from "@/components/ChainRow";
 import { CollectionAdminPanel } from "@/components/CollectionAdminPanel";
 import { CountdownClock } from "@/components/CountdownClock";
+import { JoinRequestButton } from "@/components/JoinRequestButton";
 
 export const dynamic = "force-dynamic";
 
@@ -32,9 +36,20 @@ export default async function ChainPage({ params }: PageProps) {
   const s = t(locale);
   const { root, path, nodes, state, phase } = view;
   const remaining = hoursUntil(state.turnDeadline);
-  const isAdmin = isCollectionAdmin(root, session?.user?.username);
+  const isFounder = isCollectionAdmin(root, session?.user?.username);
+  const isAdmin = isFounder || isSuperAdmin(session?.user?.username);
   const isOpen = root.chainStatus === "live" && phase !== "past";
   const progress = collectionProgress(root, path.length);
+
+  // Katılma isteği: sadece giriş yapmış, henüz bu koleksiyonda olmayan ve
+  // koleksiyon şu an fiilen açık (upcoming/past değil) kullanıcılara gösterilir.
+  const sessionHandle = session?.user?.username ?? null;
+  const alreadyMember = sessionHandle
+    ? path.some((c) => c.xUsername.toLowerCase() === sessionHandle.toLowerCase())
+    : false;
+  const canRequestJoin = Boolean(sessionHandle) && phase === "ongoing" && !alreadyMember;
+  const initialRequested =
+    canRequestJoin && sessionHandle ? await hasJoinRequest(root.id, sessionHandle) : false;
 
   // Geri sayımların başlangıç değeri sunucuda hesaplanıp istemciye veriliyor;
   // böylece ilk render iki tarafta da aynı oluyor (hydration uyuşmazlığı yok)
@@ -80,10 +95,10 @@ export default async function ChainPage({ params }: PageProps) {
         </p>
 
         <Link
-          href={`/u/${root.xUsername}`}
+          href={`/u/${encodeURIComponent(root.xUsername)}`}
           className="mt-2 inline-block font-mono text-[12px] text-smoke underline-offset-4 transition hover:text-bone hover:underline"
         >
-          {s.collection.byFounder(root.xUsername)}
+          {s.collection.byFounder(displayHandle(root.xUsername))}
         </Link>
 
         {root.collectionDescription && (
@@ -129,11 +144,22 @@ export default async function ChainPage({ params }: PageProps) {
       </header>
 
       <main className="relative z-10 mx-auto max-w-6xl">
+        {canRequestJoin && (
+          <div className="mb-6 flex justify-center">
+            <JoinRequestButton
+              collectionId={root.id}
+              initialRequested={initialRequested}
+              locale={locale}
+            />
+          </div>
+        )}
+
         {isAdmin && (
           <CollectionAdminPanel
             collectionId={root.id}
             path={path}
             isOpen={isOpen}
+            isFounder={isFounder}
             locale={locale}
           />
         )}

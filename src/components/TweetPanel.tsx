@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Locale, t } from "@/lib/dictionary";
 import { isValidTweetUrl } from "@/lib/tweet";
+import { TweetEmbed } from "./TweetEmbed";
 
 interface TweetPanelProps {
   cardId: number;
@@ -11,59 +12,6 @@ interface TweetPanelProps {
   /** Kartın sahibi mi — sadece o iliştirip kaldırabilir. */
   isOwner: boolean;
   locale: Locale;
-}
-
-declare global {
-  interface Window {
-    twttr?: { widgets?: { load: (el?: HTMLElement | null) => void } };
-  }
-}
-
-const WIDGETS_SRC = "https://platform.twitter.com/widgets.js";
-
-/**
- * Tweet'i X'in kendi gömülü görünümüyle basar. Beğeni/retweet sayısını biz
- * okumuyoruz — X API'de ücretsiz katman kalmadığı için sayılar sadece bu
- * gömülü görünümün içinde canlı olarak görünür.
- */
-function TweetEmbed({ url }: { url: string }) {
-  const holderRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const theme =
-      document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
-
-    const holder = holderRef.current;
-    if (!holder) return;
-
-    holder.innerHTML = "";
-    const quote = document.createElement("blockquote");
-    quote.className = "twitter-tweet";
-    quote.setAttribute("data-theme", theme);
-    quote.setAttribute("data-dnt", "true");
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    quote.appendChild(anchor);
-    holder.appendChild(quote);
-
-    if (window.twttr?.widgets) {
-      window.twttr.widgets.load(holder);
-      return;
-    }
-
-    const existing = document.querySelector<HTMLScriptElement>(`script[src="${WIDGETS_SRC}"]`);
-    if (existing) {
-      existing.addEventListener("load", () => window.twttr?.widgets?.load(holder), { once: true });
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.src = WIDGETS_SRC;
-    script.async = true;
-    document.body.appendChild(script);
-  }, [url]);
-
-  return <div ref={holderRef} className="flex justify-center [&_.twitter-tweet]:!my-0" />;
 }
 
 export function TweetPanel({ cardId, tweetUrl, isOwner, locale }: TweetPanelProps) {
@@ -94,7 +42,13 @@ export function TweetPanel({ cardId, tweetUrl, isOwner, locale }: TweetPanelProp
       });
       const json = await res.json();
       if (!res.ok) {
-        setError(json.error === "INVALID_TWEET_URL" ? s.errorInvalid : s.errorGeneric);
+        setError(
+          json.error === "INVALID_TWEET_URL"
+            ? s.errorInvalid
+            : json.error === "RATE_LIMITED"
+              ? s.errorRateLimited
+              : s.errorGeneric
+        );
         return;
       }
       setEditing(false);

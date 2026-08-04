@@ -31,6 +31,21 @@ const dict = {
       notFound: "Bu koleksiyon bulunamadı.",
     },
 
+    joinRequest: {
+      sendButton: "Katılma İsteği Gönder",
+      sentNote: "İsteğin gönderildi — sıradaki kişi seni seçerse etiketlenirsin.",
+      withdrawButton: "İsteği Geri Çek",
+      confirmWithdraw: "İsteğini geri çekmek istiyor musun?",
+      working: "...",
+      errorAlreadyMember: "Zaten bu koleksiyondasın.",
+      errorBanned: "Bu hesap kuralı çiğnediği için yasaklı.",
+      errorNotStarted: "Bu koleksiyon henüz başlamadı.",
+      errorClosed: "Bu koleksiyon artık yeni istek kabul etmiyor.",
+      errorGeneric: "Bir hata oluştu.",
+      errorConnection: "Bağlantı hatası, tekrar dene.",
+      errorRateLimited: "Çok fazla istek gönderdin, biraz sonra tekrar dene.",
+    },
+
     collection: {
       filterAll: "TÜMÜ",
       filterUpcoming: "YAKLAŞAN",
@@ -72,10 +87,12 @@ const dict = {
       limitField: "Kişi sayısı",
       startField: "Başlangıç tarihi (opsiyonel)",
       startHint: "Boş bırakırsan hemen başlar. İleri bir tarih verirsen o zamana kadar 'yaklaşan' olarak listelenir.",
+      imageInvalid: "Sadece PNG, JPEG, WEBP ya da GIF ve en fazla 900KB.",
 
       // Yönetici paneli
       adminTitle: "YÖNETİCİ",
       adminNote: "Bu koleksiyonu sen başlattın.",
+      superAdminNote: "Süper admin olarak bu koleksiyonu yönetiyorsun.",
       actionComplete: "Tamamla ve Yayımla",
       actionCancel: "İptal Et",
       actionDelete: "Kalıcı Olarak Sil",
@@ -90,12 +107,29 @@ const dict = {
       confirmRemove: (h: string) => `@${h} ve altındaki herkes zincirden çıkarılacak. Emin misin?`,
       working: "...",
       errorGeneric: "İşlem başarısız oldu.",
+      errorRateLimited: "Çok fazla istek gönderdin, biraz sonra tekrar dene.",
     },
 
     nav: {
       signIn: "X ile Giriş",
       signOut: "Çıkış",
       myProfile: "Profilim",
+    },
+
+    admin: {
+      title: "SÜPER ADMIN",
+      subtitle: "Bu panel sadece senin X hesabına görünür.",
+      grantSectionTitle: "GENESİS YETKİSİ",
+      grantSectionHint:
+        "Yetki verdiğin X hesapları davetsiz yeni bir koleksiyon başlatabilir. Bir hesabı listeden kaldırmak için üzerine tıkla.",
+      grantAction: "Yetki Ver",
+      usernameRequired: "Bir X kullanıcı adı gir.",
+      confirmRevoke: (u: string) => `@${u} hesabından genesis yetkisi alınacak. Emin misin?`,
+      collectionsSectionTitle: "TÜM KOLEKSİYONLAR",
+      working: "...",
+      errorGeneric: "İşlem başarısız oldu.",
+      errorConnection: "Bağlantı hatası, tekrar dene.",
+      errorRateLimited: "Çok fazla istek gönderdin, biraz sonra tekrar dene.",
     },
 
     rulesPage: {
@@ -160,6 +194,9 @@ const dict = {
       tweetBody:
         "Zincire katıldığını X'te duyurduysan, o tweet'in linkini kendi kart sayfandan kartına ekleyebilirsin. Kartını gezen herkes tweet'i orada görür ve X'te açabilir.",
 
+      exampleTweetTitle: "GERÇEK BİR ÖRNEK",
+      exampleTweetLead: "Zincir X'te böyle başlıyor:",
+
       ctaBack: "← Ana Sayfaya Dön",
     },
 
@@ -219,6 +256,7 @@ const dict = {
       skills: "SKILLS:",
       unnamed: "İsimsiz Oyuncu",
       defaultRole: "Web3 Builder",
+      aboutLabel: "HAKKINDA",
     },
 
     chainShare: {
@@ -246,7 +284,15 @@ const dict = {
       targetReason: "İnsanlar onu neden takip etsin?",
       targetReasonPlaceholder: "Web3 üzerine çok iyi içerik üretiyor",
       targetReasonHint: "Bu da tweet'e eklenir — etiketlediğin kişiyi tanıtır.",
-      lockedNote: (u: string) => `Bu davet sadece @${u} hesabı için geçerli.`,
+      lockedNote: (u: string, platform: "x" | "farcaster" = "x") =>
+        platform === "farcaster"
+          ? `Farcaster ile giriş yaptığın hesaptan otomatik alındı: @${u}`
+          : `X ile giriş yaptığın hesaptan otomatik alındı: @${u}`,
+      imageInvalid: "Sadece PNG, JPEG, WEBP ya da GIF ve en fazla 900KB.",
+      joinRequestsTitle: "KATILMA İSTEKLERİ",
+      joinRequestsHint:
+        "Birini etiketlemek yerine bu koleksiyona katılmak isteyenlerden birini seçebilirsin. İsme tıklarsan X profili açılır.",
+      selectAction: "Seç",
     },
 
     create: {
@@ -298,6 +344,7 @@ const dict = {
         `Zincire katılmak istiyorsan @${admin} ile iletişime geç.`,
       contactCta: "İletişime Geç",
       adminSignInHint: (admin: string) => `@${admin} sen misin?`,
+      errorRateLimited: "Çok fazla istek gönderdin, biraz sonra tekrar dene.",
     },
 
     invite: {
@@ -318,7 +365,9 @@ const dict = {
     profile: {
       pngDownload: "PNG İndir",
       downloading: "İndiriliyor...",
+      downloadError: "Görsel oluşturulamadı, tekrar dene.",
       shareOnX: "X'te Paylaş",
+      shareOnFarcaster: "Farcaster'da Paylaş",
       accepted: (handle: string) => `✅ @${handle} zincire katıldı!`,
       expired: (handle: string) => `⌛ @${handle} daveti süresi doldu`,
       pending: (handle: string, hours: number | null) =>
@@ -332,6 +381,7 @@ const dict = {
       renewErrorTarget: "Yeni bir X kullanıcı adı gir.",
       renewErrorGeneric: "Bir hata oluştu.",
       renewErrorConnection: "Bağlantı hatası, tekrar dene.",
+      renewErrorRateLimited: "Çok fazla istek gönderdin, biraz sonra tekrar dene.",
       backHome: "← Ana Sayfaya Dön",
     },
 
@@ -349,14 +399,34 @@ const dict = {
       errorInvalid: "Geçerli bir X gönderi linki değil.",
       errorGeneric: "Tweet kaydedilemedi.",
       errorConnection: "Bağlantı hatası, tekrar dene.",
+      errorRateLimited: "Çok fazla istek gönderdin, biraz sonra tekrar dene.",
       metricsNote:
         "Beğeni ve retweet sayıları X'in kendi gömülü görünümünde canlı olarak görünür.",
     },
 
     tweetIntent: {
-      lead: "Collab Chain zincirine katıldım.",
-      nextUp: (handle: string) => `Sıra sende @${handle}`,
-      closing: "Sen de kendi kartını oluştur, zinciri devam ettir 🔗",
+      startingLead: (name: string) => `${name} projesini başlatıyorum.`,
+      joinedLead: (name: string) => `${name} projesine katıldım.`,
+      passingTo: (handle: string) => `Bu arada @${handle} hesabına göz atın.`,
+      passingToWithReason: (handle: string, reason: string) =>
+        `Bu arada @${handle} hesabına göz atın — ${reason}`,
+    },
+
+    cast: {
+      title: "DUYURU CAST'İ",
+      empty: "Bu karta henüz bir cast eklenmemiş.",
+      ownerHint: "Zincire katıldığını duyurduğun cast'in linkini yapıştır.",
+      placeholder: "https://warpcast.com/kullanici/0x...",
+      save: "Ekle",
+      saving: "...",
+      change: "Değiştir",
+      remove: "Kaldır",
+      cancel: "Vazgeç",
+      view: "Cast'i Warpcast'te Aç",
+      errorInvalid: "Geçerli bir Warpcast gönderi linki değil.",
+      errorGeneric: "Cast kaydedilemedi.",
+      errorConnection: "Bağlantı hatası, tekrar dene.",
+      errorRateLimited: "Çok fazla istek gönderdin, biraz sonra tekrar dene.",
     },
   },
 
@@ -388,6 +458,21 @@ const dict = {
       membersCount: (n: number) => (n === 1 ? "1 member" : `${n} members`),
       backHome: "← Back to Home",
       notFound: "This collection couldn't be found.",
+    },
+
+    joinRequest: {
+      sendButton: "Send Join Request",
+      sentNote: "Your request was sent — you'll be tagged if the next person picks you.",
+      withdrawButton: "Withdraw Request",
+      confirmWithdraw: "Withdraw your join request?",
+      working: "...",
+      errorAlreadyMember: "You're already in this collection.",
+      errorBanned: "This account is banned for breaking the rule.",
+      errorNotStarted: "This collection hasn't started yet.",
+      errorClosed: "This collection isn't accepting new requests anymore.",
+      errorGeneric: "Something went wrong.",
+      errorConnection: "Connection error, please try again.",
+      errorRateLimited: "You're sending requests too fast — try again in a bit.",
     },
 
     collection: {
@@ -431,9 +516,11 @@ const dict = {
       startField: "Start date (optional)",
       startHint:
         "Leave empty to start right away. Set a future date and it stays listed as 'upcoming' until then.",
+      imageInvalid: "PNG, JPEG, WEBP or GIF only, up to 900KB.",
 
       adminTitle: "ADMIN",
       adminNote: "You started this collection.",
+      superAdminNote: "You're managing this collection as the super admin.",
       actionComplete: "Complete & Publish",
       actionCancel: "Cancel",
       actionDelete: "Delete Permanently",
@@ -448,12 +535,29 @@ const dict = {
       confirmRemove: (h: string) => `@${h} and everyone below them will be removed. Are you sure?`,
       working: "...",
       errorGeneric: "The action failed.",
+      errorRateLimited: "You're sending requests too fast — try again in a bit.",
     },
 
     nav: {
       signIn: "Sign in with X",
       signOut: "Sign out",
       myProfile: "My Profile",
+    },
+
+    admin: {
+      title: "SUPER ADMIN",
+      subtitle: "This panel is only visible to your X account.",
+      grantSectionTitle: "GENESIS PERMISSION",
+      grantSectionHint:
+        "X accounts you grant permission to can start a new collection without an invite. Click an account to remove it from the list.",
+      grantAction: "Grant Permission",
+      usernameRequired: "Enter an X username.",
+      confirmRevoke: (u: string) => `Genesis permission will be revoked from @${u}. Are you sure?`,
+      collectionsSectionTitle: "ALL COLLECTIONS",
+      working: "...",
+      errorGeneric: "The action failed.",
+      errorConnection: "Connection error, please try again.",
+      errorRateLimited: "You're sending requests too fast — try again in a bit.",
     },
 
     rulesPage: {
@@ -518,6 +622,9 @@ const dict = {
       tweetBody:
         "If you announced joining the chain on X, you can attach that tweet's link to your card from your own card page. Anyone visiting your card sees the tweet there and can open it on X.",
 
+      exampleTweetTitle: "A REAL EXAMPLE",
+      exampleTweetLead: "This is what starting a chain on X looks like:",
+
       ctaBack: "← Back to Home",
     },
 
@@ -577,6 +684,7 @@ const dict = {
       skills: "SKILLS:",
       unnamed: "Unnamed Player",
       defaultRole: "Web3 Builder",
+      aboutLabel: "ABOUT",
     },
 
     chainShare: {
@@ -604,7 +712,15 @@ const dict = {
       targetReason: "Why should people follow them?",
       targetReasonPlaceholder: "They put out great Web3 content",
       targetReasonHint: "This goes in the tweet too — it introduces who you tagged.",
-      lockedNote: (u: string) => `This invite is only valid for @${u}.`,
+      lockedNote: (u: string, platform: "x" | "farcaster" = "x") =>
+        platform === "farcaster"
+          ? `Auto-filled from the Farcaster account you signed in with: @${u}`
+          : `Auto-filled from the X account you signed in with: @${u}`,
+      imageInvalid: "PNG, JPEG, WEBP or GIF only, up to 900KB.",
+      joinRequestsTitle: "JOIN REQUESTS",
+      joinRequestsHint:
+        "Instead of tagging someone, you can pick from people who requested to join this collection. Click a name to open their X profile.",
+      selectAction: "Select",
     },
 
     create: {
@@ -655,6 +771,7 @@ const dict = {
         `If you'd like to join the chain, get in touch with @${admin}.`,
       contactCta: "Get in Touch",
       adminSignInHint: (admin: string) => `Are you @${admin}?`,
+      errorRateLimited: "You're sending requests too fast — try again in a bit.",
     },
 
     invite: {
@@ -675,7 +792,9 @@ const dict = {
     profile: {
       pngDownload: "Download PNG",
       downloading: "Downloading...",
+      downloadError: "Couldn't create the image, try again.",
       shareOnX: "Share on X",
+      shareOnFarcaster: "Share on Farcaster",
       accepted: (handle: string) => `✅ @${handle} joined the chain!`,
       expired: (handle: string) => `⌛ @${handle}'s invite has expired`,
       pending: (handle: string, hours: number | null) =>
@@ -689,6 +808,7 @@ const dict = {
       renewErrorTarget: "Enter a new X username.",
       renewErrorGeneric: "Something went wrong.",
       renewErrorConnection: "Connection error, please try again.",
+      renewErrorRateLimited: "You're sending requests too fast — try again in a bit.",
       backHome: "← Back to Home",
     },
 
@@ -706,13 +826,33 @@ const dict = {
       errorInvalid: "That isn't a valid X post link.",
       errorGeneric: "Couldn't save the tweet.",
       errorConnection: "Connection error, please try again.",
+      errorRateLimited: "You're sending requests too fast — try again in a bit.",
       metricsNote: "Likes and retweets show live inside X's own embedded view.",
     },
 
     tweetIntent: {
-      lead: "I just joined Collab Chain.",
-      nextUp: (handle: string) => `You're up @${handle}`,
-      closing: "Create your own card and keep the chain going 🔗",
+      startingLead: (name: string) => `Starting ${name}.`,
+      joinedLead: (name: string) => `Just joined ${name}.`,
+      passingTo: (handle: string) => `Also, check out @${handle}.`,
+      passingToWithReason: (handle: string, reason: string) =>
+        `Also, check out @${handle} — ${reason}`,
+    },
+
+    cast: {
+      title: "ANNOUNCEMENT CAST",
+      empty: "No cast has been attached to this card yet.",
+      ownerHint: "Paste the link to the cast where you announced joining the chain.",
+      placeholder: "https://warpcast.com/username/0x...",
+      save: "Attach",
+      saving: "...",
+      change: "Change",
+      remove: "Remove",
+      cancel: "Cancel",
+      view: "Open Cast on Warpcast",
+      errorInvalid: "That isn't a valid Warpcast post link.",
+      errorGeneric: "Couldn't save the cast.",
+      errorConnection: "Connection error, please try again.",
+      errorRateLimited: "You're sending requests too fast — try again in a bit.",
     },
   },
 } as const;

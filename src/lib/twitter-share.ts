@@ -15,18 +15,24 @@ function clamp(text: string, limit: number): string {
 }
 
 interface TweetParts {
+  /** Koleksiyonun adı — "Starting a {name} follow chain!" satırına girer. */
+  collectionName: string;
+  /** Kartı bu kişi mi başlattı (kurucu) yoksa zincire sonradan mı katıldı. */
+  isFounder: boolean;
   targetUsername: string;
   bio?: string;
   targetReason?: string;
 }
 
 /**
- * Paylaşım metnini kullanıcının kendi tanıtımı ve etiketlediği kişi için
- * yazdığı sebeple doldurur. Sığmazsa önce sebep, sonra bio kısaltılır —
- * zinciri devam ettiren çağrı her zaman korunur.
+ * Paylaşım metnini doğal, tanıtım tonunda kurar: açılış (koleksiyon adı +
+ * kurucu/katılımcı ayrımı), kullanıcının kendi tanıtımı, etiketlediği kişiyi
+ * öneren cümle. Bilinçli olarak "follow chain / quote & pass it on" gibi
+ * X'in spam/platform-manipülasyonu tespitine takılan kalıp ifadeler
+ * kullanılmıyor. Sığmazsa önce sebep, sonra bio kısaltılır.
  */
 export function buildChainTweetText(
-  { targetUsername, bio, targetReason }: TweetParts,
+  { collectionName, isFounder, targetUsername, bio, targetReason }: TweetParts,
   locale: Locale
 ): string {
   const s = t(locale).tweetIntent;
@@ -35,14 +41,14 @@ export function buildChainTweetText(
 
   const trimmedBio = (bio ?? "").trim();
   const trimmedReason = (targetReason ?? "").trim();
+  const lead = isFounder ? s.startingLead(collectionName) : s.joinedLead(collectionName);
 
   const build = (bioText: string, reasonText: string) => {
-    const blocks: string[] = [];
-    blocks.push(bioText ? `${s.lead} ${bioText}` : s.lead);
+    const blocks: string[] = [lead];
+    if (bioText) blocks.push(bioText);
     if (handle) {
-      blocks.push(reasonText ? `${s.nextUp(handle)} — ${reasonText}` : s.nextUp(handle));
+      blocks.push(reasonText ? s.passingToWithReason(handle, reasonText) : s.passingTo(handle));
     }
-    blocks.push(s.closing);
     return blocks.join("\n\n");
   };
 

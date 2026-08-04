@@ -16,6 +16,7 @@ import {
   EMPTY_COLLECTION_FORM,
 } from "@/lib/types";
 import { Locale, t } from "@/lib/dictionary";
+import { displayHandle } from "@/lib/handle";
 import type { Card } from "@/generated/prisma/client";
 
 type Tab = "card" | "chain";
@@ -28,6 +29,10 @@ interface CreateClientProps {
   /** Bu kişinin zincirde alacağı sıra — kart üstünde gösterilen numara. */
   nextPosition: number;
   locale: Locale;
+  /** X ile giriş yapan hesabın kullanıcı adı — kart her zaman bu adla oluşturulur. */
+  sessionUsername: string;
+  /** Bu koleksiyona katılmak isteyenler — etiketlemek yerine buradan seçilebilir. */
+  joinRequests: string[];
 }
 
 export function CreateClient({
@@ -37,13 +42,15 @@ export function CreateClient({
   inviteExpiryHours,
   nextPosition,
   locale,
+  sessionUsername,
+  joinRequests,
 }: CreateClientProps) {
   const s = t(locale).create;
   const router = useRouter();
-  const lockedUsername = parentCard?.targetUsername ?? null;
-  const [data, setData] = useState<CardData>(() =>
-    lockedUsername ? { ...EMPTY_CARD_DATA, xUsername: lockedUsername } : EMPTY_CARD_DATA
-  );
+  const [data, setData] = useState<CardData>(() => ({
+    ...EMPTY_CARD_DATA,
+    xUsername: sessionUsername,
+  }));
   const [tab, setTab] = useState<Tab>("card");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -99,6 +106,8 @@ export function CreateClient({
           COLLECTION_NOT_STARTED: s.errorNotStarted,
           NOT_ADMIN: s.errorNotAdmin,
           COLLECTION_NAME_REQUIRED: t(locale).collection.nameRequired,
+          INVALID_IMAGE: t(locale).form.imageInvalid,
+          RATE_LIMITED: s.errorRateLimited,
         };
         setError(messages[json.error as string] ?? json.error ?? s.errorGeneric);
         return;
@@ -124,7 +133,7 @@ export function CreateClient({
         </p>
         {parentCard && (
           <p className="mt-2 text-sm text-ash">
-            {s.invitedBy(parentCard.firstName, parentCard.lastName, parentCard.xUsername)}
+            {s.invitedBy(parentCard.firstName, parentCard.lastName, displayHandle(parentCard.xUsername))}
           </p>
         )}
         <p className="mt-2 text-[15px] text-ash">{s.instructions}</p>
@@ -136,7 +145,13 @@ export function CreateClient({
       <main className="relative z-10 mx-auto grid max-w-6xl min-w-0 gap-8 lg:grid-cols-[380px_1fr]">
 
         <div className="space-y-6">
-          <CardForm data={data} onChange={setData} locale={locale} lockedUsername={lockedUsername} />
+          <CardForm
+            data={data}
+            onChange={setData}
+            locale={locale}
+            sessionUsername={sessionUsername}
+            joinRequests={joinRequests}
+          />
           {isNewCollection && (
             <CollectionSettingsForm
               value={collection}

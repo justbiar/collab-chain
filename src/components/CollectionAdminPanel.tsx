@@ -11,10 +11,12 @@ interface Props {
   path: Card[];
   /** Kapanmış koleksiyonda sadece silme kalır. */
   isOpen: boolean;
+  /** Panel koleksiyonun kendi kurucusuna mı, yoksa süper admin moderasyonuna mı gösteriliyor. */
+  isFounder: boolean;
   locale: Locale;
 }
 
-export function CollectionAdminPanel({ collectionId, path, isOpen, locale }: Props) {
+export function CollectionAdminPanel({ collectionId, path, isOpen, isFounder, locale }: Props) {
   const s = t(locale).collection;
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
@@ -36,7 +38,7 @@ export function CollectionAdminPanel({ collectionId, path, isOpen, locale }: Pro
       const res = await request();
       if (!res.ok) {
         const json = await res.json().catch(() => ({}));
-        setError(json.error ?? s.errorGeneric);
+        setError(json.error === "RATE_LIMITED" ? s.errorRateLimited : (json.error ?? s.errorGeneric));
         return;
       }
       if (afterDelete) router.push("/");
@@ -60,7 +62,9 @@ export function CollectionAdminPanel({ collectionId, path, isOpen, locale }: Pro
       <p className="text-center font-mono text-[11px] tracking-[0.2em] text-ash">
         [{s.adminTitle}]
       </p>
-      <p className="mt-1.5 text-center text-[12px] text-smoke">{s.adminNote}</p>
+      <p className="mt-1.5 text-center text-[12px] text-smoke">
+        {isFounder ? s.adminNote : s.superAdminNote}
+      </p>
 
       <div className="mt-4 flex flex-wrap items-center justify-center gap-2.5">
         {isOpen && (

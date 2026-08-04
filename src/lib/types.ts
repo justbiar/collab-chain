@@ -1,3 +1,14 @@
+export const FIRST_NAME_MAX = 40;
+export const LAST_NAME_MAX = 40;
+export const ROLE_MAX = 60;
+export const SKILLS_MAX = 200;
+/**
+ * X kullanıcı adları en fazla 15 karakter. Farcaster kullanıcı adları
+ * bizim tarafımızda "fc:" önekiyle saklanıyor (bkz. lib/handle.ts) — sınır
+ * ikisine de pay bırakacak şekilde geniş tutuluyor.
+ */
+export const USERNAME_MAX = 48;
+
 export interface CardData {
   firstName: string;
   lastName: string;

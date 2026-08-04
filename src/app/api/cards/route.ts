@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createCard, ChainError, chainErrorStatus } from "@/lib/chain";
 import { auth } from "@/auth";
-import { isAdminHandle } from "@/lib/admin";
+import { canStartGenesis } from "@/lib/genesis";
+import { enforceWriteRateLimit } from "@/lib/rate-limit";
 import { CardData } from "@/lib/types";
 
 interface CreateCardBody extends CardData {
@@ -30,21 +31,27 @@ function parseLimit(value: string | undefined): number | null {
 }
 
 export async function POST(req: NextRequest) {
-  const body = (await req.json()) as Partial<CreateCardBody>;
-  const parentId = body.parentId ?? null;
-
-  // Kart oluşturmanın her yolu doğrulanmış X oturumu ister. Kullanıcı adı
-  // daima oturumdan alınır; client'ın gönderdiği xUsername yok sayılır ki
-  // kimse başkasının adına kart açamasın.
+  // Kart oluşturmanın her yolu doğrulanmış X oturumu ister. Oturum body
+  // parse edilmeden önce kontrol edilir — aksi halde oturumu olmayan biri
+  // bile sınırsız büyüklükte bir gövdeyi sunucuya işletebilirdi.
   const session = await auth();
   const xUsername = session?.user?.username;
   if (!xUsername) {
     return NextResponse.json({ error: "NOT_AUTHENTICATED" }, { status: 401 });
   }
 
+  const rateLimited = await enforceWriteRateLimit(req, xUsername);
+  if (rateLimited) return rateLimited;
+
+  const body = (await req.json()) as Partial<CreateCardBody>;
+  const parentId = body.parentId ?? null;
+
+  // Kullanıcı adı daima oturumdan alınır; client'ın gönderdiği xUsername
+  // yok sayılır ki kimse başkasının adına kart açamasın.
+
   // Davetsiz yeni zincir başlatmak sadece admin hesabına açık. Bu kontrol
   // /create sayfasında da var ama orası yalnızca arayüz — asıl kapı burası.
-  if (parentId == null && !isAdminHandle(xUsername)) {
+  if (parentId == null && !(await canStartGenesis(xUsername))) {
     return NextResponse.json({ error: "NOT_ADMIN" }, { status: 403 });
   }
 

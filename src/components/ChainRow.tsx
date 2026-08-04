@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ChainNode, ChainState } from "@/lib/chain";
 import { isInviteExpired } from "@/lib/invite";
+import { displayHandle } from "@/lib/handle";
 import { Locale, t } from "@/lib/dictionary";
 import { Avatar } from "./Avatar";
 import { GoldenChain } from "./GoldenChain";
@@ -75,7 +76,7 @@ export function ChainRow({ nodes, state, isOpen = true, locale }: ChainRowProps)
               >
                 {card.firstName} {card.lastName}
               </p>
-              <p className="font-mono text-[11px] text-smoke">@{card.xUsername}</p>
+              <p className="font-mono text-[11px] text-smoke">@{displayHandle(card.xUsername)}</p>
             </div>
 
             <span
@@ -107,7 +108,9 @@ export function ChainRow({ nodes, state, isOpen = true, locale }: ChainRowProps)
               <p className="text-[13px] font-[500] text-ash group-hover:text-bone">
                 {pendingExpired ? s.chainNode.expired : s.chainNode.pending}
               </p>
-              <p className="truncate text-[11px] text-smoke">@{pendingTarget.targetUsername}</p>
+              <p className="truncate text-[11px] text-smoke">
+                @{displayHandle(pendingTarget.targetUsername ?? "")}
+              </p>
             </div>
           </Link>
         </div>

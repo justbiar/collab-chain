@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ChainShareGraphic } from "@/components/ChainShareGraphic";
 import { FitToWidth } from "@/components/FitToWidth";
 import { CardData } from "@/lib/types";
+import { displayHandle } from "@/lib/handle";
 import { Locale, t } from "@/lib/i18n";
 import type { Card } from "@/generated/prisma/client";
 
@@ -28,7 +29,7 @@ export function InvitePreview({ parent, locale }: { parent: Card; locale: Locale
 
       <header className="relative z-10 mx-auto mb-8 max-w-xl text-center">
         <p className="font-mono text-[19px] tracking-[-0.03em] text-bone">
-          @{parent.targetUsername}
+          @{displayHandle(parent.targetUsername ?? "")}
         </p>
         <p className="mt-1 text-[44px] font-[800] leading-[1.05] tracking-[-0.04em] text-gradient-ice">
           {s.heading}
@@ -39,6 +40,14 @@ export function InvitePreview({ parent, locale }: { parent: Card; locale: Locale
       </header>
 
       <main className="relative z-10 mx-auto flex max-w-xl flex-col items-center gap-6">
+        {/* Asıl aksiyon en üstte, göz ardı edilemesin — altındaki görsel sadece önizleme. */}
+        <Link
+          href={`/create?invite=${parent.id}`}
+          className="btn-metallic-silver inline-flex items-center gap-3 rounded-full px-10 py-5 text-[16px] font-[700] tracking-[-0.01em]"
+        >
+          {s.acceptCta}
+        </Link>
+
         <div className="glass-panel w-full max-w-full rounded-[22px] p-4 shadow-2xl sm:p-10">
           <div className="mx-auto w-full max-w-[720px]">
             <FitToWidth designWidth={1200}>
@@ -46,13 +55,6 @@ export function InvitePreview({ parent, locale }: { parent: Card; locale: Locale
             </FitToWidth>
           </div>
         </div>
-
-        <Link
-          href={`/create?invite=${parent.id}`}
-          className="btn-metallic-silver inline-flex items-center gap-3 rounded-full px-10 py-5 text-[16px] font-[700] tracking-[-0.01em]"
-        >
-          {s.acceptCta}
-        </Link>
 
         <Link href="/" className="text-xs text-smoke underline">
           {s.backHome}

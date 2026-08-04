@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getCardById, renewInvite, ChainError, chainErrorStatus } from "@/lib/chain";
+import { enforceWriteRateLimit } from "@/lib/rate-limit";
 
 export async function PATCH(
   req: NextRequest,
@@ -19,6 +20,9 @@ export async function PATCH(
   if (!sessionHandle) {
     return NextResponse.json({ error: "NOT_AUTHENTICATED" }, { status: 401 });
   }
+
+  const rateLimited = await enforceWriteRateLimit(req, sessionHandle);
+  if (rateLimited) return rateLimited;
 
   const card = await getCardById(cardId);
   if (!card) {

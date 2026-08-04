@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getCardById, getCardPosition } from "@/lib/chain";
+import { collectionTitle, findRoot, getCardById, getCardPosition } from "@/lib/chain";
 import { getLocale } from "@/lib/i18n";
 import { auth } from "@/auth";
 import { CardProfileClient } from "./CardProfileClient";
@@ -26,12 +26,18 @@ export default async function CardPage({ params }: PageProps) {
   // Kart numarası zincirdeki sıradır, veritabanı id'si değil.
   const position = await getCardPosition(card);
 
+  // Koleksiyon adı sadece kök kartta tutulur; paylaşım tweet'i için hangi
+  // karta bakılırsa bakılsın kökten okunur.
+  const root = await findRoot(card);
+  const collectionName = collectionTitle(root);
+
   return (
     <CardProfileClient
       card={card}
       position={position}
       locale={locale}
       isOwner={isOwner}
+      collectionName={collectionName}
     />
   );
 }

@@ -25,6 +25,9 @@ model Card {
   /// Üyenin zincire katıldığını duyurduğu tweet — sonradan kendi kartına ekler.
   tweetUrl String?
 
+  /// Üyenin zincire katıldığını duyurduğu Farcaster cast'i — tweetUrl'ün eşdeğeri.
+  castUrl String?
+
   /// Üyenin kendini kısaca tanıttığı metin — paylaşım tweet'ine de girer.
   bio String @default("")
 
@@ -84,4 +87,26 @@ model BannedUser {
   xUsername String   @unique
   cardId    Int?
   bannedAt  DateTime @default(now())
+}
+
+/// Davetsiz yeni koleksiyon başlatma yetkisi verilen X hesapları.
+/// ADMIN_X_USERNAME ortam değişkenindeki tek hesabın dışında, bu tabloya
+/// eklenen herkes de genesis başlatabilir. Süper admin bu listeyi yönetir.
+model GenesisGrant {
+  id        Int      @id @default(autoincrement())
+  xUsername String   @unique
+  grantedAt DateTime @default(now())
+}
+
+/// Bir koleksiyona katılmak isteyen ama henüz etiketlenmemiş X hesapları.
+/// Sırası gelen üye kart oluştururken bu listeden seçip etiketleyebilir.
+/// collectionId her zaman kök karta (parentId == null) işaret eder.
+model JoinRequest {
+  id           Int      @id @default(autoincrement())
+  collectionId Int
+  xUsername    String
+  createdAt    DateTime @default(now())
+
+  @@unique([collectionId, xUsername])
+  @@index([collectionId])
 }

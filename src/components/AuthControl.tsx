@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { auth, signIn, signOut } from "@/auth";
 import { getLocale, t } from "@/lib/i18n";
+import { displayHandle } from "@/lib/handle";
 import { Avatar } from "./Avatar";
+import { FarcasterSignInButton } from "./FarcasterSignInButton";
 
 /**
  * Nav'daki oturum göstergesi. Giriş yapılmışsa hesabı ve profil linkini,
@@ -15,26 +17,29 @@ export async function AuthControl() {
 
   if (!username) {
     return (
-      <form
-        action={async () => {
-          "use server";
-          await signIn("twitter");
-        }}
-      >
-        <button
-          type="submit"
-          className="btn-metallic-ghost rounded-full px-3 py-1.5 font-mono text-[10px] tracking-[0.1em]"
+      <div className="flex items-center gap-1.5">
+        <form
+          action={async () => {
+            "use server";
+            await signIn("twitter");
+          }}
         >
-          {s.signIn}
-        </button>
-      </form>
+          <button
+            type="submit"
+            className="btn-metallic-ghost rounded-full px-3 py-1.5 font-mono text-[10px] tracking-[0.1em]"
+          >
+            {s.signIn}
+          </button>
+        </form>
+        <FarcasterSignInButton />
+      </div>
     );
   }
 
   return (
     <div className="flex items-center gap-1.5">
       <Link
-        href={`/u/${username}`}
+        href={`/u/${encodeURIComponent(username)}`}
         title={s.myProfile}
         className="flex items-center gap-1.5 rounded-full border border-[rgba(var(--edge-rgb),0.18)] bg-carbon/40 py-0.5 pl-0.5 pr-2.5 transition hover:border-[rgba(var(--edge-rgb),0.4)]"
       >
@@ -45,13 +50,13 @@ export async function AuthControl() {
             className="h-full w-full object-cover"
             fallback={
               <span className="flex h-full w-full items-center justify-center bg-steel-plate text-[10px] text-ash">
-                {username.charAt(0).toUpperCase()}
+                {displayHandle(username).charAt(0).toUpperCase()}
               </span>
             }
           />
         </span>
         <span className="max-w-[90px] truncate font-mono text-[10px] text-bone">
-          @{username}
+          @{displayHandle(username)}
         </span>
       </Link>
 

@@ -1,5 +1,6 @@
 import { forwardRef } from "react";
 import { CardData } from "@/lib/types";
+import { displayHandle } from "@/lib/handle";
 import { Locale, t } from "@/lib/dictionary";
 import { LogoPattern } from "./LogoPattern";
 import { GoldenChain } from "./GoldenChain";
@@ -16,8 +17,8 @@ export const ChainShareGraphic = forwardRef<HTMLDivElement, ChainShareGraphicPro
     const { firstName, lastName, xUsername, role, profileImageUrl, targetUsername, logoImageUrl } =
       data;
     const fullName = `${firstName} ${lastName}`.trim() || s.card.unnamed;
-    const handle = xUsername.replace(/^@/, "") || "username";
-    const target = targetUsername.replace(/^@/, "") || "next";
+    const handle = displayHandle(xUsername.replace(/^@/, "")) || "username";
+    const target = displayHandle(targetUsername.replace(/^@/, "")) || "next";
 
     return (
       <div
@@ -67,14 +68,15 @@ export const ChainShareGraphic = forwardRef<HTMLDivElement, ChainShareGraphicPro
         {/* CHAIN */}
         <GoldenChain linkCount={9} className="relative z-10 -mx-2" />
 
-        {/* RIGHT: pending card */}
-        <div className="card-nebula-muted relative z-10 flex h-[400px] w-[300px] flex-col items-center justify-center rounded-[17.6px] border-2 border-dashed border-white/15 p-6">
-          <div className="card-avatar-ring-muted h-24 w-24 rounded-2xl p-[3px] opacity-80">
+        {/* RIGHT: next person — henüz katılmadı ama soluk/muted görünmesin diye
+            aktif karttakiyle aynı görsel dille (kart-nebula, canlı halka) çizilir. */}
+        <div className="card-nebula relative z-10 flex h-[400px] w-[300px] flex-col items-center justify-center rounded-[17.6px] border border-white/10 p-6">
+          <div className="card-avatar-ring h-24 w-24 rounded-2xl p-[3px]">
             <div className="flex h-full w-full items-center justify-center rounded-[14px] bg-[#0c0c0e]">
               <Avatar
                 imageUrl={null}
                 username={targetUsername}
-                className="h-full w-full rounded-[11px] object-cover grayscale"
+                className="h-full w-full rounded-[11px] object-cover"
                 fallback={
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -94,11 +96,8 @@ export const ChainShareGraphic = forwardRef<HTMLDivElement, ChainShareGraphicPro
               />
             </div>
           </div>
-          <p className="mt-5 font-mono text-xs tracking-[0.2em] text-white/40">{s.chainShare.next}</p>
+          <p className="mt-5 font-mono text-xs tracking-[0.2em] text-[#c9b8e8]">{s.chainShare.next}</p>
           <p className="mt-1 font-mono text-xl font-[450] text-white">@{target}</p>
-          <span className="mt-3 rounded-full border border-white/20 px-3 py-1 font-mono text-[10px] tracking-[0.2em] text-white/70">
-            [{s.chainShare.pending}]
-          </span>
         </div>
       </div>
     );

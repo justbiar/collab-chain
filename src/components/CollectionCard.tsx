@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Card } from "@/generated/prisma/client";
 import type { CollectionPhase } from "@/lib/collection";
 import { collectionTitle } from "@/lib/chain";
+import { displayHandle } from "@/lib/handle";
 import { Locale, t } from "@/lib/dictionary";
 import { AvatarStack } from "./AvatarStack";
 
@@ -66,7 +67,7 @@ export function CollectionCard({ root, chain, phase, locale }: CollectionCardPro
             {collectionTitle(root)}
           </p>
           <p className="mt-0.5 font-mono text-[10px] text-smoke">
-            {s.collection.byFounder(founder.xUsername)}
+            {s.collection.byFounder(displayHandle(founder.xUsername))}
           </p>
         </div>
 
