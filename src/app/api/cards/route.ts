@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createCard, ChainError, chainErrorStatus } from "@/lib/chain";
 import { auth } from "@/auth";
-import { canStartGenesis } from "@/lib/genesis";
 import { enforceWriteRateLimit } from "@/lib/rate-limit";
 import { CardData } from "@/lib/types";
 
@@ -49,11 +48,7 @@ export async function POST(req: NextRequest) {
   // Kullanıcı adı daima oturumdan alınır; client'ın gönderdiği xUsername
   // yok sayılır ki kimse başkasının adına kart açamasın.
 
-  // Davetsiz yeni zincir başlatmak sadece admin hesabına açık. Bu kontrol
-  // /create sayfasında da var ama orası yalnızca arayüz — asıl kapı burası.
-  if (parentId == null && !(await canStartGenesis(xUsername))) {
-    return NextResponse.json({ error: "NOT_ADMIN" }, { status: 403 });
-  }
+  // Davetsiz yeni zincir başlatmak artık her doğrulanmış hesaba açık.
 
   if (!body.firstName?.trim()) {
     return NextResponse.json(

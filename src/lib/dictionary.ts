@@ -338,12 +338,8 @@ const dict = {
         `Bu davet @${target} için oluşturulmuş, ama sen @${actual} olarak giriş yaptın.`,
       unknownUser: "bilinmeyen",
       signOutRetry: "Çıkış Yap ve Farklı Hesapla Dene",
-      genesisLockedTitle: (admin: string) =>
-        `Şu anda sadece @${admin} yeni bir zincir başlatabilir.`,
-      genesisLockedBody: (admin: string) =>
-        `Zincire katılmak istiyorsan @${admin} ile iletişime geç.`,
-      contactCta: "İletişime Geç",
-      adminSignInHint: (admin: string) => `@${admin} sen misin?`,
+      startAuthRequiredTitle: "Yeni bir zincir başlatmak için giriş yapmalısın.",
+      startAuthRequiredBody: "X ya da Farcaster hesabınla giriş yap, hemen kendi koleksiyonunu başlat.",
       errorRateLimited: "Çok fazla istek gönderdin, biraz sonra tekrar dene.",
     },
 
@@ -765,12 +761,8 @@ const dict = {
         `This invite was created for @${target}, but you signed in as @${actual}.`,
       unknownUser: "unknown",
       signOutRetry: "Sign Out and Try a Different Account",
-      genesisLockedTitle: (admin: string) =>
-        `Right now, only @${admin} can start a new chain.`,
-      genesisLockedBody: (admin: string) =>
-        `If you'd like to join the chain, get in touch with @${admin}.`,
-      contactCta: "Get in Touch",
-      adminSignInHint: (admin: string) => `Are you @${admin}?`,
+      startAuthRequiredTitle: "You need to sign in to start a new chain.",
+      startAuthRequiredBody: "Sign in with X or Farcaster and start your own collection right away.",
       errorRateLimited: "You're sending requests too fast — try again in a bit.",
     },
 

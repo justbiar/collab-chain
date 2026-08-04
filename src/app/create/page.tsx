@@ -10,8 +10,6 @@ import {
 } from "@/lib/chain";
 import { auth, signIn, signOut } from "@/auth";
 import { getLocale, t } from "@/lib/i18n";
-import { adminHandle } from "@/lib/admin";
-import { canStartGenesis } from "@/lib/genesis";
 import { GateScreen } from "@/components/GateScreen";
 import { FarcasterSignInButton } from "@/components/FarcasterSignInButton";
 import { displayHandle } from "@/lib/handle";
@@ -46,39 +44,29 @@ export default async function CreatePage({ searchParams }: PageProps) {
     }
   }
 
-  // Genesis akışı (davetsiz yeni zincir başlatma): sadece admin X hesabı serbest.
-  // Aynı kontrol /api/cards içinde de var — burası sadece arayüz kapısı.
+  // Genesis akışı (davetsiz yeni zincir başlatma): artık herkes başlatabilir,
+  // tek şart oturum açmış olmak. Aynı kontrol /api/cards içinde de var —
+  // burası sadece arayüz kapısı.
   if (parentId == null && !inviteError) {
-    const adminUsername = adminHandle();
     const session = await auth();
 
-    if (!(await canStartGenesis(session?.user?.username))) {
+    if (!session?.user?.username) {
       return (
         <GateScreen>
-          <p className="text-lg font-[500] text-bone">
-            {s.genesisLockedTitle(adminUsername)}
-          </p>
-          <p className="max-w-sm text-sm text-smoke">
-            {s.genesisLockedBody(adminUsername)}
-          </p>
-          <a
-            href={`https://x.com/${adminUsername}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-metallic-silver rounded-full px-7 py-3 text-[15px] font-[500] tracking-[-0.02em]"
-          >
-            {s.contactCta}
-          </a>
+          <p className="text-lg font-[500] text-bone">{s.startAuthRequiredTitle}</p>
+          <p className="max-w-sm text-sm text-smoke">{s.startAuthRequiredBody}</p>
 
-          <div className="mt-3 flex w-full flex-col items-center gap-2 border-t border-[rgba(var(--edge-rgb),0.12)] pt-4">
-            <p className="text-xs text-smoke">{s.adminSignInHint(adminUsername)}</p>
+          <div className="flex w-full flex-col items-center gap-2">
             <form
               action={async () => {
                 "use server";
                 await signIn("twitter", { redirectTo: "/create" });
               }}
             >
-              <button type="submit" className="btn-metallic-ghost rounded-full px-4 py-2 text-xs">
+              <button
+                type="submit"
+                className="btn-metallic-silver rounded-full px-7 py-3 text-[15px] font-[500] tracking-[-0.02em]"
+              >
                 {s.signInWithX}
               </button>
             </form>
