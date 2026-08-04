@@ -158,6 +158,24 @@ body {
 }
 
 /*
+ * @farcaster/auth-kit'in "Sign in" butonu varsayılan olarak 53px yüksekliğinde
+ * geliyor — navbar'daki diğer (kompakt, 11px font) kontrollerin yanında hem
+ * çok büyük duruyor hem de dar ekranlarda pill'in dışına taşıp erişilemez
+ * hale geliyordu. Boyutu navbar'ın geri kalanıyla eşleşecek şekilde küçültüyoruz.
+ */
+.fc-authkit-signin-button button {
+  padding: 6px 12px !important;
+  font-size: 11px !important;
+  border-radius: 9999px !important;
+  gap: 6px !important;
+}
+
+.fc-authkit-signin-button button svg {
+  width: 15px !important;
+  height: 15px !important;
+}
+
+/*
  * Machined silver pill — the single action surface
  */
 .btn-metallic-silver {

@@ -62,7 +62,7 @@ export function SiteControls({
           {/* Logo görselinde site adı zaten mevcut */}
         </Link>
 
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex min-w-0 shrink items-center gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <Link
             href="/rules"
             className="hidden rounded-full px-3 py-1 font-mono text-[11px] tracking-[0.15em] text-smoke transition hover:text-bone sm:block"
@@ -70,7 +70,7 @@ export function SiteControls({
             {s.rulesPage.nav}
           </Link>
 
-          <div className="flex rounded-full bg-black/20 p-1">
+          <div className="flex shrink-0 rounded-full bg-black/20 p-1">
             <button
               onClick={() => switchLocale("tr")}
               aria-pressed={locale === "tr"}
@@ -98,7 +98,7 @@ export function SiteControls({
           <button
             onClick={toggleTheme}
             aria-label="Toggle theme"
-            className="flex h-8 w-8 items-center justify-center rounded-full text-bone transition hover:bg-black/20"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-bone transition hover:bg-black/20"
           >
             {theme === "dark" ? (
               <svg
@@ -139,7 +139,7 @@ export function SiteControls({
                 aria-hidden
                 className="h-5 w-px shrink-0 bg-[rgba(var(--edge-rgb),0.18)]"
               />
-              {authSlot}
+              <div className="flex shrink-0 items-center">{authSlot}</div>
             </>
           )}
         </div>
