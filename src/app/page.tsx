@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { collectionTitle, getAllCollections, INVITE_EXPIRY_HOURS } from "@/lib/chain";
+import { collectionTitle, getAllCollections } from "@/lib/chain";
 import type { CollectionPhase } from "@/lib/collection";
 import { getLocale, t } from "@/lib/i18n";
 import { auth } from "@/auth";
@@ -82,48 +82,6 @@ export default async function Home({ searchParams }: PageProps) {
           >
             {s.rulesPage.nav}
           </Link>
-        </div>
-
-        {/* Trust stat row — solid bright icon discs pop against the dark hero */}
-        <div className="mx-auto mt-16 grid max-w-3xl grid-cols-1 gap-10 sm:grid-cols-3 sm:gap-4 sm:divide-x sm:divide-[rgba(var(--edge-rgb),0.15)]">
-          <div className="flex flex-col items-center gap-3 text-center sm:px-5">
-            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-bone text-carbon shadow-[0_0_22px_-4px_rgba(232,232,236,0.4),inset_0_-1px_0_rgba(0,0,0,0.25)]">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
-              </svg>
-            </span>
-            <div>
-              <p className="font-mono text-[11px] font-[700] tracking-[0.15em] text-bone">{s.home.ruleOneInviteTitle}</p>
-              <p className="mt-1.5 text-[13px] leading-snug text-ash">{s.home.ruleOneInvite}</p>
-            </div>
-          </div>
-
-          <div className="flex flex-col items-center gap-3 text-center sm:px-5">
-            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-bone text-carbon shadow-[0_0_22px_-4px_rgba(232,232,236,0.4),inset_0_-1px_0_rgba(0,0,0,0.25)]">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
-                <circle cx="12" cy="12" r="9" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 7v5l3.5 2" />
-              </svg>
-            </span>
-            <div>
-              <p className="font-mono text-[11px] font-[700] tracking-[0.15em] text-bone">{s.home.ruleExpiryTitle}</p>
-              <p className="mt-1.5 text-[13px] leading-snug text-ash">{s.home.ruleExpiry(INVITE_EXPIRY_HOURS)}</p>
-            </div>
-          </div>
-
-          <div className="flex flex-col items-center gap-3 text-center sm:px-5">
-            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-bone text-carbon shadow-[0_0_22px_-4px_rgba(232,232,236,0.4),inset_0_-1px_0_rgba(0,0,0,0.25)]">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3.51 9a9 9 0 0114.85-3.36L21 8.5M20.49 15a9 9 0 01-14.85 3.36L3 15.5" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 4.5V8.5H17M3 19.5V15.5H7" />
-              </svg>
-            </span>
-            <div>
-              <p className="font-mono text-[11px] font-[700] tracking-[0.15em] text-bone">{s.home.ruleRenewTitle}</p>
-              <p className="mt-1.5 text-[13px] leading-snug text-ash">{s.home.ruleRenew}</p>
-            </div>
-          </div>
         </div>
       </header>
 
